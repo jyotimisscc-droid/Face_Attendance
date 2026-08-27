@@ -297,7 +297,7 @@ function getRealGPS() {
 // ==========================================
 
 var ATTENDANCE_API_URL =
-  "YOUR_APPS_SCRIPT_WEB_APP_URL";
+  "https://script.google.com/macros/s/AKfycbzFV8jtvcMVmRSbHROlQ_-5HIAxPKg-3xbmyeTE5a10JnTQffsctOx3CQyMYGM_IsD3/exec";
 
 
 // ==========================================
