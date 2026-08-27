@@ -10,7 +10,7 @@
 //   ↓
 // CAMERA
 //   ↓
-// TWO EYE BLINK LIVENESS CHECK
+// ONE EYE BLINK LIVENESS CHECK
 //   ↓
 // FACE DETECTION
 //   ↓
@@ -964,6 +964,7 @@ async function startCamera() {
             video.videoWidth
         );
 
+
         console.log(
             "VIDEO HEIGHT:",
             video.videoHeight
@@ -1125,28 +1126,16 @@ async function startCamera() {
 // BLINK DETECTION
 // =====================================================
 //
-// Uses Face Landmark 68.
-//
-// Left eye points:
-// 36 - 41
-//
-// Right eye points:
-// 42 - 47
-//
-// EAR = Eye Aspect Ratio
-//
-// Eye open:
-// higher EAR
-//
-// Eye closed:
-// lower EAR
-//
-// Two transitions are required:
+// ONE BLINK VERSION
 //
 // OPEN → CLOSED → OPEN
-// OPEN → CLOSED → OPEN
 //
-// This means TWO actual blinks.
+// Blink detect hone ke baad immediately
+// liveness verified ho jayegi.
+//
+// IMPORTANT:
+// Face detection + landmarks use ho rahe hain.
+// Embedding tabhi generate hogi jab blink complete ho.
 // =====================================================
 
 
@@ -1251,15 +1240,24 @@ function getEyeEAR(landmarks) {
 
 
 // =====================================================
-// WAIT FOR TWO BLINKS
+// WAIT FOR ONE BLINK
 // =====================================================
 //
-// Important:
+// UPDATED:
 //
-// Blink checking camera se live frames read karta hai.
-// Face image/embedding tab tak generate nahi hoti
-// jab tak 2 blinks complete nahi hote.
+// OLD:
+// 2 BLINKS
+// 15 SECOND TIMEOUT
+// 2 CLOSED FRAMES
+// 2 OPEN FRAMES
 //
+// NEW:
+// 1 BLINK
+// 8 SECOND TIMEOUT
+// 1 CLOSED FRAME
+// 1 OPEN FRAME
+//
+// This makes detection much faster.
 // =====================================================
 
 async function waitForTwoBlinks(video) {
@@ -1277,16 +1275,30 @@ async function waitForTwoBlinks(video) {
         Date.now();
 
 
+    // Faster timeout
     const timeout =
-        15000;
+        8000;
 
+
+    // =================================================
+    // EAR THRESHOLDS
+    // =================================================
+    //
+    // Closed:
+    // below 0.24
+    //
+    // Open:
+    // above 0.26
+    //
+    // Gap prevents random noise.
+    // =================================================
 
     const CLOSED_THRESHOLD =
-        0.21;
+        0.24;
 
 
     const OPEN_THRESHOLD =
-        0.25;
+        0.26;
 
 
     let stableOpenFrames = 0;
@@ -1295,13 +1307,13 @@ async function waitForTwoBlinks(video) {
 
 
     setFaceStatus(
-        "👁️ Liveness check: 2 baar eyes blink karo...",
+        "👁️ Liveness check: ek baar eyes blink karo...",
         "processing"
     );
 
 
     setStatus(
-        "Liveness check chal raha hai — 2 baar eyes blink karo."
+        "Liveness check chal raha hai — ek baar blink karo."
     );
 
 
@@ -1309,9 +1321,23 @@ async function waitForTwoBlinks(video) {
         "===================================="
     );
 
+
     console.log(
-        "TWO BLINK LIVENESS CHECK STARTED"
+        "ONE BLINK LIVENESS CHECK STARTED"
     );
+
+
+    console.log(
+        "CLOSED THRESHOLD:",
+        CLOSED_THRESHOLD
+    );
+
+
+    console.log(
+        "OPEN THRESHOLD:",
+        OPEN_THRESHOLD
+    );
+
 
     console.log(
         "===================================="
@@ -1341,7 +1367,7 @@ async function waitForTwoBlinks(video) {
                     resolve =>
                         setTimeout(
                             resolve,
-                            100
+                            50
                         )
                 );
 
@@ -1359,7 +1385,7 @@ async function waitForTwoBlinks(video) {
                         video,
                         new faceapi.TinyFaceDetectorOptions({
                             inputSize: 320,
-                            scoreThreshold: 0.5
+                            scoreThreshold: 0.45
                         })
                     )
                     .withFaceLandmarks(true);
@@ -1375,7 +1401,7 @@ async function waitForTwoBlinks(video) {
                     resolve =>
                         setTimeout(
                             resolve,
-                            80
+                            40
                         )
                 );
 
@@ -1414,19 +1440,25 @@ async function waitForTwoBlinks(video) {
                 stableOpenFrames = 0;
 
 
+                // Only one frame needed
+                // to register closed state.
+
                 if (
-                    stableClosedFrames >= 2 &&
+                    stableClosedFrames >= 1 &&
                     !previousEyesClosed
                 ) {
 
                     previousEyesClosed = true;
 
+
                     console.log(
                         "EYES CLOSED"
                     );
+
                 }
 
             }
+
 
             // =================================================
             // EYES OPEN
@@ -1439,8 +1471,11 @@ async function waitForTwoBlinks(video) {
                 stableClosedFrames = 0;
 
 
+                // One open frame after closed
+                // = completed blink.
+
                 if (
-                    stableOpenFrames >= 2 &&
+                    stableOpenFrames >= 1 &&
                     previousEyesClosed
                 ) {
 
@@ -1448,12 +1483,10 @@ async function waitForTwoBlinks(video) {
                         Date.now();
 
 
-                    // Prevent duplicate blink counting
-                    // from same eye movement.
+                    // Prevent duplicate detection.
 
                     if (
-                        now - lastBlinkTime >
-                        400
+                        now - lastBlinkTime > 250
                     ) {
 
                         blinkCount++;
@@ -1472,30 +1505,19 @@ async function waitForTwoBlinks(video) {
                             false;
 
 
+                        // =================================================
+                        // ONE BLINK COMPLETE
+                        // =================================================
+
                         if (
                             blinkCount === 1
                         ) {
 
                             setFaceStatus(
-                                "✓ First blink detected. Ab ek baar aur blink karo...",
-                                "processing"
-                            );
-
-                            setStatus(
-                                "First blink complete. Second blink karo."
-                            );
-
-                        }
-
-
-                        if (
-                            blinkCount === 2
-                        ) {
-
-                            setFaceStatus(
-                                "✓ Two eye blinks detected. Face scan continue ho raha hai...",
+                                "✓ Blink detected. Liveness verified. Face scan continue ho raha hai...",
                                 "success"
                             );
+
 
                             setStatus(
                                 "Liveness verified. Face embedding generate ho rahi hai..."
@@ -1507,23 +1529,27 @@ async function waitForTwoBlinks(video) {
 
 
                             console.log(
-                                "TWO BLINKS VERIFIED"
+                                "ONE BLINK VERIFIED"
                             );
 
 
                             return true;
                         }
+
                     }
+
                 }
 
             }
 
 
+            // Very short interval for fast detection
+
             await new Promise(
                 resolve =>
                     setTimeout(
                         resolve,
-                        80
+                        40
                     )
             );
 
@@ -1531,11 +1557,12 @@ async function waitForTwoBlinks(video) {
 
 
         throw new Error(
-            "2 eye blinks detect nahi hue.\n\n" +
-            "Camera ke saamne seedha dekho aur dono eyes ko naturally 2 baar blink karo."
+            "Blink detect nahi hua.\n\n" +
+            "Camera ke saamne seedha dekho aur ek baar naturally blink karo."
         );
 
     }
+
 
     finally {
 
@@ -1669,29 +1696,35 @@ async function enrollFaceToBackend() {
         "===================================="
     );
 
+
     console.log(
         "NEW FACE ENROLLMENT STARTED"
     );
+
 
     console.log(
         "Employee ID:",
         loggedEmployee.employeeId
     );
 
+
     console.log(
         "Email:",
         loggedEmployee.email
     );
+
 
     console.log(
         "Embedding length:",
         currentEmbedding.length
     );
 
+
     console.log(
         "First 5 values:",
         currentEmbedding.slice(0, 5)
     );
+
 
     console.log(
         "===================================="
@@ -1945,11 +1978,9 @@ async function verifyFaceWithBackend() {
 // SCAN FACE
 // =====================================================
 //
-// NEW ADDITION:
-//
 // Scan Face
 //    ↓
-// TWO BLINK CHECK
+// ONE BLINK CHECK
 //    ↓
 // FACE DETECTION
 //    ↓
@@ -2026,8 +2057,7 @@ async function scanFace() {
 
 
         // =================================================
-        // NEW:
-        // TWO BLINK LIVENESS CHECK
+        // ONE BLINK LIVENESS CHECK
         // =================================================
 
         await waitForTwoBlinks(
@@ -2040,7 +2070,7 @@ async function scanFace() {
         // =================================================
 
         setFaceStatus(
-            "✓ Two blinks verified. Face embedding generate ho rahi hai...",
+            "✓ Blink verified. Face embedding generate ho rahi hai...",
             "processing"
         );
 
@@ -2341,6 +2371,7 @@ async function scanFace() {
 
     }
 
+
     catch (error) {
 
         console.error(
@@ -2404,6 +2435,7 @@ async function scanFace() {
         );
 
     }
+
 
     finally {
 
@@ -2934,6 +2966,7 @@ async function markAttendance() {
 
     }
 
+
     catch (error) {
 
         console.error(
@@ -2953,6 +2986,7 @@ async function markAttendance() {
         );
 
     }
+
 
     finally {
 
