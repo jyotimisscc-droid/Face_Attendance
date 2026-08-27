@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
 
     <meta name="viewport"
@@ -9,99 +10,1833 @@
 
     <title>Face Attendance System</title>
 
-    <link rel="stylesheet" href="style.css">
+    <style>
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #1f2937;
+            color: white;
+            padding: 18px 30px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+        }
+
+        .header p {
+            margin-top: 5px;
+            color: #d1d5db;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            color: #111827;
+        }
+
+        /* LOGIN */
+
+        .login-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .login-row input {
+            flex: 1;
+            padding: 13px;
+            border: 1px solid #d1d5db;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        /* BUTTON */
+
+        button {
+            border: none;
+            border-radius: 7px;
+            padding: 12px 20px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-success {
+            background: #16a34a;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+
+        /* EMPLOYEE */
+
+        .employee-info {
+            display: none;
+            background: #eff6ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .employee-info p {
+            margin: 5px 0;
+        }
+
+        /* CAMERA */
+
+        .camera-container {
+            text-align: center;
+        }
+
+        #camera {
+            width: 100%;
+            max-width: 600px;
+            border-radius: 10px;
+            background: #111;
+            display: none;
+        }
+
+        #canvas {
+            display: none;
+        }
+
+        .camera-message {
+            background: #f3f4f6;
+            padding: 60px 20px;
+            border-radius: 10px;
+            color: #6b7280;
+        }
+
+        .camera-buttons {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* PHOTO */
+
+        #photoSection {
+            display: none;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        #capturedImage {
+            width: 180px;
+            height: 180px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 3px solid #16a34a;
+        }
+
+        /* IN OUT */
+
+        .attendance-options {
+            display: flex;
+            gap: 20px;
+            margin-top: 10px;
+        }
+
+        .attendance-option {
+            flex: 1;
+            padding: 20px;
+            border: 2px solid #d1d5db;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .attendance-option input {
+            display: none;
+        }
+
+        .attendance-option strong {
+            display: block;
+            font-size: 20px;
+        }
+
+        .attendance-option span {
+            display: block;
+            margin-top: 5px;
+            color: #6b7280;
+        }
+
+        .attendance-option.selected-in {
+            border-color: #16a34a;
+            background: #f0fdf4;
+        }
+
+        .attendance-option.selected-out {
+            border-color: #dc2626;
+            background: #fef2f2;
+        }
+
+        /* MARK BUTTON */
+
+        .mark-section {
+            text-align: center;
+            margin-top: 25px;
+        }
+
+        #markAttendanceBtn {
+            width: 100%;
+            max-width: 400px;
+            font-size: 17px;
+            padding: 15px;
+        }
+
+        /* STATUS */
+
+        #statusText {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* ATTENDANCE RESULT */
+
+        #attendanceResult {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+        }
+
+        #attendanceResult h3 {
+            color: #15803d;
+            margin-bottom: 12px;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 7px 0;
+            border-bottom: 1px solid #dcfce7;
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .result-label {
+            font-weight: bold;
+        }
+
+        /* CURRENT STATUS */
+
+        .current-status {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+        }
+
+        .current-status h3 {
+            margin-bottom: 10px;
+        }
+
+        .status-in {
+            color: #15803d;
+            font-weight: bold;
+        }
+
+        .status-out {
+            color: #dc2626;
+            font-weight: bold;
+        }
+
+        @media(max-width: 600px) {
+
+            .login-row {
+                flex-direction: column;
+            }
+
+            .attendance-options {
+                flex-direction: column;
+            }
+
+        }
+
+    </style>
+
 </head>
+
 
 <body>
 
-    <div class="container">
 
-        <div class="attendance-card">
+<!-- =====================================================
+     HEADER
+===================================================== -->
 
-            <h1>Face Attendance System</h1>
+<div class="header">
 
-            <p class="subtitle">
-                Camera & Attendance
-            </p>
+    <h1>Face Attendance System</h1>
 
+    <p>
+        Secure Employee Attendance
+    </p>
 
-            <!-- CAMERA AREA -->
-            <div class="camera-container">
-
-                <video
-                    id="camera"
-                    autoplay
-                    playsinline>
-                </video>
-
-                <div id="cameraMessage">
-                    Camera is not started
-                </div>
-
-            </div>
+</div>
 
 
-            <!-- BUTTONS -->
-            <div class="button-container">
 
-                <button
-                    id="startCameraBtn"
-                    onclick="startCamera()">
-                    Start Camera
-                </button>
-
-                <button
-                    id="captureBtn"
-                    onclick="capturePhoto()"
-                    disabled>
-                    Capture
-                </button>
-
-                <button
-                    id="stopCameraBtn"
-                    onclick="stopCamera()"
-                    disabled>
-                    Stop Camera
-                </button>
-
-            </div>
+<div class="container">
 
 
-            <!-- STATUS -->
-            <div class="status-box">
+<!-- =====================================================
+     1. EMAIL LOGIN
+===================================================== -->
 
-                <strong>Status:</strong>
+<div class="card">
 
-                <span id="statusText">
-                    Waiting for camera...
-                </span>
+    <h2>Employee Login</h2>
 
-            </div>
+    <div class="login-row">
+
+        <input
+            type="email"
+            id="employeeEmail"
+            placeholder="Enter your company email"
+            autocomplete="email"
+        >
+
+        <button
+            class="btn-primary"
+            id="loginBtn"
+            onclick="loginEmployee()"
+        >
+            Login
+        </button>
+
+    </div>
 
 
-            <!-- HIDDEN CANVAS -->
-            <canvas id="canvas"></canvas>
+    <div
+        class="employee-info"
+        id="employeeInfo"
+    >
+
+        <p>
+            <strong>Name:</strong>
+            <span id="employeeName">-</span>
+        </p>
+
+        <p>
+            <strong>Employee ID:</strong>
+            <span id="employeeId">-</span>
+        </p>
+
+        <p>
+            <strong>Department:</strong>
+            <span id="employeeDepartment">-</span>
+        </p>
+
+        <p>
+            <strong>Email:</strong>
+            <span id="loggedEmail">-</span>
+        </p>
+
+    </div>
+
+</div>
 
 
-            <!-- CAPTURED PHOTO -->
-            <div
-                id="photoSection"
-                class="photo-section">
 
-                <h2>Captured Photo</h2>
+<!-- =====================================================
+     2. IN / OUT
+===================================================== -->
 
-                <img
-                    id="capturedImage"
-                    alt="Captured Face">
+<div
+    class="card"
+    id="attendanceTypeCard"
+    style="display:none;"
+>
 
-            </div>
+    <h2>Attendance Type</h2>
+
+    <div class="attendance-options">
+
+
+        <label
+            class="attendance-option"
+            id="inOption"
+        >
+
+            <input
+                type="radio"
+                name="attendanceType"
+                value="IN"
+                onchange="selectAttendanceType('IN')"
+            >
+
+            <strong>
+                IN
+            </strong>
+
+            <span>
+                Mark Check-In
+            </span>
+
+        </label>
+
+
+
+        <label
+            class="attendance-option"
+            id="outOption"
+        >
+
+            <input
+                type="radio"
+                name="attendanceType"
+                value="OUT"
+                onchange="selectAttendanceType('OUT')"
+            >
+
+            <strong>
+                OUT
+            </strong>
+
+            <span>
+                Mark Check-Out
+            </span>
+
+        </label>
+
+    </div>
+
+
+    <div
+        class="current-status"
+        id="currentStatus"
+    >
+
+        <h3>
+            Today's Attendance
+        </h3>
+
+        <div class="result-row">
+
+            <span class="result-label">
+                Current Status
+            </span>
+
+            <span id="currentAttendanceStatus">
+                -
+            </span>
+
+        </div>
+
+
+        <div class="result-row">
+
+            <span class="result-label">
+                IN Time
+            </span>
+
+            <span id="currentInTime">
+                -
+            </span>
+
+        </div>
+
+
+        <div class="result-row">
+
+            <span class="result-label">
+                OUT Time
+            </span>
+
+            <span id="currentOutTime">
+                -
+            </span>
 
         </div>
 
     </div>
 
+</div>
 
-    <script src="script.js"></script>
+
+
+<!-- =====================================================
+     3. CAMERA
+===================================================== -->
+
+<div
+    class="card"
+    id="cameraCard"
+    style="display:none;"
+>
+
+    <h2>Face Verification</h2>
+
+
+    <div class="camera-container">
+
+
+        <div
+            class="camera-message"
+            id="cameraMessage"
+        >
+            Camera is not started
+        </div>
+
+
+        <video
+            id="camera"
+            autoplay
+            playsinline
+        ></video>
+
+
+        <canvas
+            id="canvas"
+        ></canvas>
+
+
+        <div class="camera-buttons">
+
+
+            <button
+                class="btn-primary"
+                id="startCameraBtn"
+                onclick="startCamera()"
+            >
+                Start Camera
+            </button>
+
+
+            <button
+                class="btn-success"
+                id="captureBtn"
+                onclick="capturePhoto()"
+                disabled
+            >
+                Capture Face
+            </button>
+
+
+            <button
+                class="btn-secondary"
+                id="stopCameraBtn"
+                onclick="stopCamera()"
+                disabled
+            >
+                Stop Camera
+            </button>
+
+        </div>
+
+
+
+        <!-- CAPTURED PHOTO -->
+
+        <div id="photoSection">
+
+            <p style="margin-bottom:10px;">
+                Captured Face
+            </p>
+
+            <img
+                id="capturedImage"
+                alt="Captured Face"
+            >
+
+        </div>
+
+
+    </div>
+
+</div>
+
+
+
+<!-- =====================================================
+     4. MARK ATTENDANCE
+===================================================== -->
+
+<div
+    class="card"
+    id="markCard"
+    style="display:none;"
+>
+
+    <h2>Mark Attendance</h2>
+
+
+    <div class="mark-section">
+
+        <button
+            class="btn-success"
+            id="markAttendanceBtn"
+            onclick="markAttendance()"
+        >
+            MARK ATTENDANCE
+        </button>
+
+
+        <div id="statusText">
+            Ready
+        </div>
+
+    </div>
+
+
+    <!-- =================================================
+         ATTENDANCE SUCCESS RESULT
+    ================================================== -->
+
+    <div
+        id="attendanceResult"
+    >
+
+        <h3>
+            ✓ Attendance Marked Successfully
+        </h3>
+
+
+        <div class="result-row">
+
+            <span class="result-label">
+                Employee
+            </span>
+
+            <span id="resultEmployee">
+                -
+            </span>
+
+        </div>
+
+
+        <div class="result-row">
+
+            <span class="result-label">
+                Attendance
+            </span>
+
+            <span id="resultType">
+                -
+            </span>
+
+        </div>
+
+
+        <div class="result-row">
+
+            <span class="result-label">
+                Date
+            </span>
+
+            <span id="resultDate">
+                -
+            </span>
+
+        </div>
+
+
+        <div class="result-row">
+
+            <span class="result-label">
+                Time
+            </span>
+
+            <span id="resultTime">
+                -
+            </span>
+
+        </div>
+
+
+        <div class="result-row">
+
+            <span class="result-label">
+                Location
+            </span>
+
+            <span id="resultLocation">
+                -
+            </span>
+
+        </div>
+
+
+        <div class="result-row">
+
+            <span class="result-label">
+                Distance
+            </span>
+
+            <span id="resultDistance">
+                -
+            </span>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+</div>
+
+
+
+<!-- =====================================================
+     JAVASCRIPT
+===================================================== -->
+
+<script>
+
+
+
+// =====================================================
+// GLOBAL VARIABLES
+// =====================================================
+
+let loggedEmployee = null;
+
+let selectedAttendanceType = null;
+
+let cameraStream = null;
+
+let capturedFaceImage = null;
+
+
+
+// =====================================================
+// APPS SCRIPT API
+// =====================================================
+
+const ATTENDANCE_API_URL =
+    "https://script.google.com/macros/s/AKfycbzFV8jtvcMVmRSbHROlQ_-5HIAxPKg-3xbmyeTE5a10JnTQffsctOx3CQyMYGM_IsD3/exec";
+
+
+
+// =====================================================
+// LOGIN EMPLOYEE
+// =====================================================
+
+async function loginEmployee() {
+
+    const email =
+        document
+        .getElementById("employeeEmail")
+        .value
+        .trim()
+        .toLowerCase();
+
+
+    if (!email) {
+
+        alert(
+            "Company email enter karo."
+        );
+
+        return;
+    }
+
+
+    if (!email.includes("@")) {
+
+        alert(
+            "Valid email enter karo."
+        );
+
+        return;
+    }
+
+
+    const loginBtn =
+        document.getElementById("loginBtn");
+
+
+    loginBtn.disabled = true;
+
+    loginBtn.textContent =
+        "Checking...";
+
+
+    try {
+
+        /*
+         * Backend ko email bhejna hai.
+         *
+         * Backend employee master se:
+         * Name
+         * Employee ID
+         * Department
+         * Status
+         * etc.
+         * return karega.
+         */
+
+        const response =
+            await fetch(
+                ATTENDANCE_API_URL,
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body: JSON.stringify({
+
+                        action: "login",
+
+                        email: email
+
+                    })
+
+                }
+            );
+
+
+        const result =
+            await response.json();
+
+
+        console.log(
+            "LOGIN RESPONSE:",
+            result
+        );
+
+
+        if (!result.success) {
+
+            alert(
+                result.message ||
+                "Employee login failed."
+            );
+
+            return;
+        }
+
+
+        // SAVE EMPLOYEE
+
+        loggedEmployee = result.employee;
+
+
+        // DISPLAY EMPLOYEE
+
+        document
+            .getElementById("employeeName")
+            .textContent =
+                loggedEmployee.name || "-";
+
+
+        document
+            .getElementById("employeeId")
+            .textContent =
+                loggedEmployee.employeeId || "-";
+
+
+        document
+            .getElementById("employeeDepartment")
+            .textContent =
+                loggedEmployee.department || "-";
+
+
+        document
+            .getElementById("loggedEmail")
+            .textContent =
+                loggedEmployee.email || email;
+
+
+        document
+            .getElementById("employeeInfo")
+            .style.display =
+                "block";
+
+
+        // SHOW NEXT SECTIONS
+
+        document
+            .getElementById("attendanceTypeCard")
+            .style.display =
+                "block";
+
+
+        document
+            .getElementById("cameraCard")
+            .style.display =
+                "block";
+
+
+        document
+            .getElementById("markCard")
+            .style.display =
+                "block";
+
+
+        // GET TODAY STATUS
+
+        await loadTodayAttendance();
+
+
+        document
+            .getElementById("statusText")
+            .textContent =
+                "Login successful. Select IN or OUT.";
+
+    }
+
+
+    catch (error) {
+
+        console.error(
+            "Login Error:",
+            error
+        );
+
+        alert(
+            "Login error:\n\n" +
+            error.message
+        );
+
+    }
+
+
+    finally {
+
+        loginBtn.disabled = false;
+
+        loginBtn.textContent =
+            "Login";
+
+    }
+
+}
+
+
+
+// =====================================================
+// SELECT IN / OUT
+// =====================================================
+
+function selectAttendanceType(type) {
+
+    selectedAttendanceType =
+        type;
+
+
+    const inOption =
+        document.getElementById("inOption");
+
+    const outOption =
+        document.getElementById("outOption");
+
+
+    inOption.classList.remove(
+        "selected-in"
+    );
+
+    outOption.classList.remove(
+        "selected-out"
+    );
+
+
+    if (type === "IN") {
+
+        inOption.classList.add(
+            "selected-in"
+        );
+
+        document
+            .getElementById("statusText")
+            .textContent =
+                "IN selected. Capture your face.";
+
+    }
+
+
+    if (type === "OUT") {
+
+        outOption.classList.add(
+            "selected-out"
+        );
+
+        document
+            .getElementById("statusText")
+            .textContent =
+                "OUT selected. Capture your face.";
+
+    }
+
+}
+
+
+
+// =====================================================
+// START CAMERA
+// =====================================================
+
+async function startCamera() {
+
+    try {
+
+        cameraStream =
+            await navigator
+                .mediaDevices
+                .getUserMedia({
+
+                    video: {
+
+                        facingMode: "user",
+
+                        width: {
+                            ideal: 1280
+                        },
+
+                        height: {
+                            ideal: 720
+                        }
+
+                    },
+
+                    audio: false
+
+                });
+
+
+        const video =
+            document.getElementById("camera");
+
+
+        video.srcObject =
+            cameraStream;
+
+
+        video.style.display =
+            "block";
+
+
+        document
+            .getElementById("cameraMessage")
+            .style.display =
+                "none";
+
+
+        document
+            .getElementById("startCameraBtn")
+            .disabled =
+                true;
+
+
+        document
+            .getElementById("captureBtn")
+            .disabled =
+                false;
+
+
+        document
+            .getElementById("stopCameraBtn")
+            .disabled =
+                false;
+
+
+        document
+            .getElementById("statusText")
+            .textContent =
+                "Camera running. Position your face.";
+
+    }
+
+
+    catch (error) {
+
+        console.error(
+            error
+        );
+
+        alert(
+            "Camera permission nahi mili."
+        );
+
+    }
+
+}
+
+
+
+// =====================================================
+// CAPTURE PHOTO
+// =====================================================
+
+function capturePhoto() {
+
+    if (!cameraStream) {
+
+        alert(
+            "Camera pehle start karo."
+        );
+
+        return;
+    }
+
+
+    const video =
+        document.getElementById("camera");
+
+
+    const canvas =
+        document.getElementById("canvas");
+
+
+    const width =
+        video.videoWidth;
+
+
+    const height =
+        video.videoHeight;
+
+
+    if (!width || !height) {
+
+        alert(
+            "Camera abhi ready nahi hai."
+        );
+
+        return;
+    }
+
+
+    canvas.width =
+        width;
+
+
+    canvas.height =
+        height;
+
+
+    const context =
+        canvas.getContext("2d");
+
+
+    context.drawImage(
+
+        video,
+
+        0,
+
+        0,
+
+        width,
+
+        height
+
+    );
+
+
+    capturedFaceImage =
+        canvas.toDataURL(
+            "image/jpeg",
+            0.90
+        );
+
+
+    document
+        .getElementById("capturedImage")
+        .src =
+            capturedFaceImage;
+
+
+    document
+        .getElementById("photoSection")
+        .style.display =
+            "block";
+
+
+    document
+        .getElementById("statusText")
+        .textContent =
+            "Face captured. Ready for verification.";
+
+}
+
+
+
+// =====================================================
+// STOP CAMERA
+// =====================================================
+
+function stopCamera() {
+
+    if (cameraStream) {
+
+        cameraStream
+            .getTracks()
+            .forEach(
+                function(track) {
+
+                    track.stop();
+
+                }
+            );
+
+        cameraStream =
+            null;
+    }
+
+
+    const video =
+        document.getElementById("camera");
+
+
+    video.srcObject =
+        null;
+
+
+    video.style.display =
+        "none";
+
+
+    document
+        .getElementById("cameraMessage")
+        .style.display =
+            "block";
+
+
+    document
+        .getElementById("cameraMessage")
+        .textContent =
+            "Camera is stopped";
+
+
+    document
+        .getElementById("startCameraBtn")
+        .disabled =
+            false;
+
+
+    document
+        .getElementById("captureBtn")
+        .disabled =
+            true;
+
+
+    document
+        .getElementById("stopCameraBtn")
+        .disabled =
+            true;
+
+}
+
+
+
+// =====================================================
+// GET REAL GPS
+// =====================================================
+
+function getRealGPS() {
+
+    return new Promise(
+
+        function(resolve, reject) {
+
+            if (!navigator.geolocation) {
+
+                reject(
+                    new Error(
+                        "GPS not supported."
+                    )
+                );
+
+                return;
+            }
+
+
+            navigator
+                .geolocation
+                .getCurrentPosition(
+
+                    function(position) {
+
+                        resolve({
+
+                            latitude:
+                                position.coords.latitude,
+
+                            longitude:
+                                position.coords.longitude,
+
+                            accuracy:
+                                position.coords.accuracy
+
+                        });
+
+                    },
+
+
+                    function(error) {
+
+                        reject(
+                            new Error(
+                                "GPS permission/location failed."
+                            )
+                        );
+
+                    },
+
+
+                    {
+
+                        enableHighAccuracy:
+                            true,
+
+                        timeout:
+                            15000,
+
+                        maximumAge:
+                            0
+
+                    }
+
+                );
+
+        }
+
+    );
+
+}
+
+
+
+// =====================================================
+// MARK ATTENDANCE
+// =====================================================
+
+async function markAttendance() {
+
+
+    // -----------------------------------------------
+    // LOGIN CHECK
+    // -----------------------------------------------
+
+    if (!loggedEmployee) {
+
+        alert(
+            "Pehle employee login karo."
+        );
+
+        return;
+    }
+
+
+    // -----------------------------------------------
+    // IN / OUT CHECK
+    // -----------------------------------------------
+
+    if (!selectedAttendanceType) {
+
+        alert(
+            "IN ya OUT select karo."
+        );
+
+        return;
+    }
+
+
+    // -----------------------------------------------
+    // FACE CHECK
+    // -----------------------------------------------
+
+    if (!capturedFaceImage) {
+
+        alert(
+            "Pehle camera se face capture karo."
+        );
+
+        return;
+    }
+
+
+    const button =
+        document
+            .getElementById(
+                "markAttendanceBtn"
+            );
+
+
+    button.disabled =
+        true;
+
+
+    button.textContent =
+        "VERIFYING...";
+
+
+    try {
+
+
+        // -------------------------------------------
+        // GPS
+        // -------------------------------------------
+
+        document
+            .getElementById("statusText")
+            .textContent =
+                "Getting GPS location...";
+
+
+        const gps =
+            await getRealGPS();
+
+
+        // -------------------------------------------
+        // BACKEND
+        // -------------------------------------------
+
+        document
+            .getElementById("statusText")
+            .textContent =
+                "Verifying face and location...";
+
+
+        const response =
+            await fetch(
+
+                ATTENDANCE_API_URL,
+
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body: JSON.stringify({
+
+                        action:
+                            "markAttendance",
+
+                        employeeId:
+                            loggedEmployee.employeeId,
+
+                        email:
+                            loggedEmployee.email,
+
+                        attendanceType:
+                            selectedAttendanceType,
+
+                        latitude:
+                            gps.latitude,
+
+                        longitude:
+                            gps.longitude,
+
+                        faceImage:
+                            capturedFaceImage
+
+                    })
+
+                }
+
+            );
+
+
+        const result =
+            await response.json();
+
+
+        console.log(
+            "ATTENDANCE RESPONSE:",
+            result
+        );
+
+
+        // -------------------------------------------
+        // SUCCESS
+        // -------------------------------------------
+
+        if (result.success) {
+
+
+            showAttendanceSuccess(
+                result
+            );
+
+
+            // Refresh today's status
+
+            await loadTodayAttendance();
+
+
+            document
+                .getElementById("statusText")
+                .textContent =
+                    "Attendance marked successfully.";
+
+
+        }
+
+
+        else {
+
+            alert(
+
+                "ATTENDANCE REJECTED\n\n" +
+
+                (
+                    result.message ||
+                    "Attendance could not be marked."
+                )
+
+            );
+
+
+            document
+                .getElementById("statusText")
+                .textContent =
+                    "Attendance rejected.";
+
+        }
+
+
+    }
+
+
+    catch (error) {
+
+        console.error(
+            "Attendance Error:",
+            error
+        );
+
+
+        alert(
+
+            "ATTENDANCE ERROR\n\n" +
+
+            error.message
+
+        );
+
+    }
+
+
+    finally {
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "MARK ATTENDANCE";
+
+    }
+
+}
+
+
+
+// =====================================================
+// SHOW ATTENDANCE SUCCESS
+// =====================================================
+
+function showAttendanceSuccess(result) {
+
+
+    const now =
+        new Date();
+
+
+    const date =
+        now.toLocaleDateString(
+            "en-IN"
+        );
+
+
+    const time =
+        now.toLocaleTimeString(
+            "en-IN",
+            {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit"
+            }
+        );
+
+
+    document
+        .getElementById("resultEmployee")
+        .textContent =
+            loggedEmployee.name;
+
+
+    document
+        .getElementById("resultType")
+        .textContent =
+            result.attendanceType ||
+            selectedAttendanceType;
+
+
+    document
+        .getElementById("resultDate")
+        .textContent =
+            result.date ||
+            date;
+
+
+    document
+        .getElementById("resultTime")
+        .textContent =
+            result.time ||
+            time;
+
+
+    document
+        .getElementById("resultLocation")
+        .textContent =
+            result.locationName ||
+            "-";
+
+
+    document
+        .getElementById("resultDistance")
+        .textContent =
+            result.distance != null
+                ? result.distance + " meters"
+                : "-";
+
+
+    document
+        .getElementById("attendanceResult")
+        .style.display =
+            "block";
+
+}
+
+
+
+// =====================================================
+// LOAD TODAY ATTENDANCE
+// =====================================================
+
+async function loadTodayAttendance() {
+
+    if (!loggedEmployee) {
+        return;
+    }
+
+
+    try {
+
+
+        const response =
+            await fetch(
+
+                ATTENDANCE_API_URL,
+
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body: JSON.stringify({
+
+                        action:
+                            "getTodayAttendance",
+
+                        employeeId:
+                            loggedEmployee.employeeId
+
+                    })
+
+                }
+
+            );
+
+
+        const result =
+            await response.json();
+
+
+        console.log(
+            "TODAY STATUS:",
+            result
+        );
+
+
+        if (
+            result.success &&
+            result.attendance
+        ) {
+
+            const attendance =
+                result.attendance;
+
+
+            document
+                .getElementById(
+                    "currentStatus"
+                )
+                .style.display =
+                    "block";
+
+
+            document
+                .getElementById(
+                    "currentAttendanceStatus"
+                )
+                .textContent =
+                    attendance.status || "-";
+
+
+            document
+                .getElementById(
+                    "currentInTime"
+                )
+                .textContent =
+                    attendance.inTime || "-";
+
+
+            document
+                .getElementById(
+                    "currentOutTime"
+                )
+                .textContent =
+                    attendance.outTime || "-";
+
+
+            // ---------------------------------------
+            // IMPORTANT
+            // ---------------------------------------
+
+            /*
+             * Agar IN already laga hua hai,
+             * to IN dobara select nahi karna.
+             */
+
+
+            if (attendance.inTime) {
+
+                document
+                    .getElementById("inOption")
+                    .style.opacity =
+                        "0.5";
+
+            }
+
+
+            if (attendance.outTime) {
+
+                document
+                    .getElementById("outOption")
+                    .style.opacity =
+                        "0.5";
+
+            }
+
+        }
+
+    }
+
+
+    catch (error) {
+
+        console.error(
+            "Today attendance error:",
+            error
+        );
+
+    }
+
+}
+
+
+
+// =====================================================
+// PAGE CLOSE
+// =====================================================
+
+window.addEventListener(
+    "beforeunload",
+    function() {
+
+        if (cameraStream) {
+
+            cameraStream
+                .getTracks()
+                .forEach(
+                    function(track) {
+
+                        track.stop();
+
+                    }
+                );
+
+        }
+
+    }
+);
+
+
+</script>
+
 
 </body>
 
