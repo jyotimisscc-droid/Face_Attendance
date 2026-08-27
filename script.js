@@ -212,6 +212,219 @@ window.addEventListener(
 
                 });
         }
+        // ==========================================
+// REAL BROWSER GPS
+// ==========================================
+
+function getRealGPS() {
+
+  return new Promise(function(resolve, reject) {
+
+    if (!navigator.geolocation) {
+
+      reject(
+        new Error(
+          "Geolocation is not supported by this browser."
+        )
+      );
+
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+
+      function(position) {
+
+        var latitude =
+          position.coords.latitude;
+
+        var longitude =
+          position.coords.longitude;
+
+        var accuracy =
+          position.coords.accuracy;
+
+        console.log("========== REAL GPS ==========");
+        console.log("Latitude:", latitude);
+        console.log("Longitude:", longitude);
+        console.log("Accuracy:", accuracy, "meters");
+
+        resolve({
+          latitude: latitude,
+          longitude: longitude,
+          accuracy: accuracy
+        });
+      },
+
+      function(error) {
+
+        var message;
+
+        switch (error.code) {
+
+          case error.PERMISSION_DENIED:
+            message = "GPS permission denied.";
+            break;
+
+          case error.POSITION_UNAVAILABLE:
+            message = "GPS location unavailable.";
+            break;
+
+          case error.TIMEOUT:
+            message = "GPS request timed out.";
+            break;
+
+          default:
+            message = "Unable to get GPS location.";
+        }
+
+        reject(new Error(message));
+      },
+
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      }
+
+    );
+  });
+}
+
+
+// ==========================================
+// APPS SCRIPT BACKEND URL
+// ==========================================
+
+var ATTENDANCE_API_URL =
+  "YOUR_APPS_SCRIPT_WEB_APP_URL";
+
+
+// ==========================================
+// SEND REAL GPS TO BACKEND
+// ==========================================
+
+async function sendGPSToBackend(employeeId) {
+
+  try {
+
+    console.log("========== ATTENDANCE START ==========");
+
+    // --------------------------------------
+    // 1. GET REAL BROWSER GPS
+    // --------------------------------------
+
+    var gps = await getRealGPS();
+
+    console.log("GPS received successfully");
+
+
+    // --------------------------------------
+    // 2. SEND GPS + EMPLOYEE ID
+    // --------------------------------------
+
+    var response = await fetch(
+      ATTENDANCE_API_URL,
+      {
+        method: "POST",
+
+        headers: {
+          "Content-Type":
+            "text/plain;charset=utf-8"
+        },
+
+        body: JSON.stringify({
+
+          employeeId: employeeId,
+
+          latitude: gps.latitude,
+
+          longitude: gps.longitude
+
+        })
+      }
+    );
+
+
+    // --------------------------------------
+    // 3. READ BACKEND RESPONSE
+    // --------------------------------------
+
+    var result = await response.json();
+
+    console.log(
+      "Backend Response:",
+      result
+    );
+
+
+    // --------------------------------------
+    // 4. ATTENDANCE RESULT
+    // --------------------------------------
+
+    if (result.success) {
+
+      alert(
+        "ATTENDANCE MARKED SUCCESSFULLY\n\n" +
+
+        "Employee: " +
+        result.employeeName +
+
+        "\nLocation: " +
+        result.locationName +
+
+        "\nDistance: " +
+        result.distance +
+        " meters" +
+
+        "\nStatus: " +
+        result.status
+      );
+
+    } else {
+
+      alert(
+        "ATTENDANCE REJECTED\n\n" +
+        result.message
+      );
+    }
+
+
+    return result;
+
+
+  } catch (error) {
+
+    console.error(
+      "Attendance Error:",
+      error
+    );
+
+    alert(
+      "ATTENDANCE ERROR\n\n" +
+      error.message
+    );
+
+    return {
+      success: false,
+      message: error.message
+    };
+  }
+}
+
+
+// ==========================================
+// TEST REAL GPS ATTENDANCE
+// ==========================================
+
+function testGPSAttendance() {
+
+  // Temporary testing only
+  // Later Face Recognition will provide
+  // this Employee ID automatically.
+
+  sendGPSToBackend("EMP001");
+}
 
     }
 );
