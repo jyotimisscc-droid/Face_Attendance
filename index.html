@@ -3,307 +3,385 @@
 
 <head>
 
-    <meta charset="UTF-8">
+<meta charset="UTF-8">
 
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0">
 
-    <title>Face Attendance System</title>
+<title>Face Attendance System</title>
 
-    <style>
+<!-- =====================================================
+     FACE API
+===================================================== -->
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 
-        body {
-            font-family: Arial, sans-serif;
-            background: #f4f6f8;
-            min-height: 100vh;
-        }
 
-        .header {
-            background: #1f2937;
-            color: white;
-            padding: 18px 30px;
-        }
+<style>
 
-        .header h1 {
-            font-size: 24px;
-        }
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
-        .header p {
-            margin-top: 5px;
-            color: #d1d5db;
-        }
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    min-height: 100vh;
+}
 
-        .container {
-            max-width: 1000px;
-            margin: 30px auto;
-            padding: 0 20px;
-        }
+.header {
+    background: #1f2937;
+    color: white;
+    padding: 18px 30px;
+}
 
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
-        }
+.header h1 {
+    font-size: 24px;
+}
 
-        .card h2 {
-            margin-bottom: 20px;
-            color: #111827;
-        }
+.header p {
+    margin-top: 5px;
+    color: #d1d5db;
+}
 
-        /* LOGIN */
+.container {
+    max-width: 1000px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
 
-        .login-row {
-            display: flex;
-            gap: 10px;
-        }
+.card {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+}
 
-        .login-row input {
-            flex: 1;
-            padding: 13px;
-            border: 1px solid #d1d5db;
-            border-radius: 7px;
-            font-size: 15px;
-        }
+.card h2 {
+    margin-bottom: 20px;
+    color: #111827;
+}
 
-        /* BUTTON */
+/* =====================================================
+   LOGIN
+===================================================== */
 
-        button {
-            border: none;
-            border-radius: 7px;
-            padding: 12px 20px;
-            font-size: 15px;
-            cursor: pointer;
-        }
+.login-row {
+    display: flex;
+    gap: 10px;
+}
 
-        button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+.login-row input {
+    flex: 1;
+    padding: 13px;
+    border: 1px solid #d1d5db;
+    border-radius: 7px;
+    font-size: 15px;
+}
 
-        .btn-primary {
-            background: #2563eb;
-            color: white;
-        }
+/* =====================================================
+   BUTTON
+===================================================== */
 
-        .btn-success {
-            background: #16a34a;
-            color: white;
-        }
+button {
+    border: none;
+    border-radius: 7px;
+    padding: 12px 20px;
+    font-size: 15px;
+    cursor: pointer;
+}
 
-        .btn-danger {
-            background: #dc2626;
-            color: white;
-        }
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
-        .btn-secondary {
-            background: #6b7280;
-            color: white;
-        }
+.btn-primary {
+    background: #2563eb;
+    color: white;
+}
 
-        /* EMPLOYEE */
+.btn-success {
+    background: #16a34a;
+    color: white;
+}
 
-        .employee-info {
-            display: none;
-            background: #eff6ff;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-        }
+.btn-danger {
+    background: #dc2626;
+    color: white;
+}
 
-        .employee-info p {
-            margin: 5px 0;
-        }
+.btn-secondary {
+    background: #6b7280;
+    color: white;
+}
 
-        /* CAMERA */
+/* =====================================================
+   EMPLOYEE
+===================================================== */
 
-        .camera-container {
-            text-align: center;
-        }
+.employee-info {
+    display: none;
+    background: #eff6ff;
+    padding: 15px;
+    border-radius: 8px;
+    margin-top: 15px;
+}
 
-        #camera {
-            width: 100%;
-            max-width: 600px;
-            border-radius: 10px;
-            background: #111;
-            display: none;
-        }
+.employee-info p {
+    margin: 5px 0;
+}
 
-        #canvas {
-            display: none;
-        }
+/* =====================================================
+   CAMERA
+===================================================== */
 
-        .camera-message {
-            background: #f3f4f6;
-            padding: 60px 20px;
-            border-radius: 10px;
-            color: #6b7280;
-        }
+.camera-container {
+    text-align: center;
+}
 
-        .camera-buttons {
-            margin-top: 15px;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
+#camera {
+    width: 100%;
+    max-width: 600px;
+    border-radius: 10px;
+    background: #111;
+    display: none;
+    transform: scaleX(-1);
+}
 
-        /* PHOTO */
+#canvas {
+    display: none;
+}
 
-        #photoSection {
-            display: none;
-            margin-top: 20px;
-            text-align: center;
-        }
+.camera-message {
+    background: #f3f4f6;
+    padding: 60px 20px;
+    border-radius: 10px;
+    color: #6b7280;
+}
 
-        #capturedImage {
-            width: 180px;
-            height: 180px;
-            object-fit: cover;
-            border-radius: 10px;
-            border: 3px solid #16a34a;
-        }
+.camera-buttons {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
 
-        /* IN OUT */
+/* =====================================================
+   FACE STATUS
+===================================================== */
 
-        .attendance-options {
-            display: flex;
-            gap: 20px;
-            margin-top: 10px;
-        }
+.face-status {
+    margin-top: 15px;
+    padding: 15px;
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    font-weight: bold;
+}
 
-        .attendance-option {
-            flex: 1;
-            padding: 20px;
-            border: 2px solid #d1d5db;
-            border-radius: 10px;
-            text-align: center;
-            cursor: pointer;
-        }
+.face-success {
+    background: #f0fdf4;
+    border-color: #86efac;
+    color: #15803d;
+}
 
-        .attendance-option input {
-            display: none;
-        }
+.face-error {
+    background: #fef2f2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+}
 
-        .attendance-option strong {
-            display: block;
-            font-size: 20px;
-        }
+.face-processing {
+    background: #eff6ff;
+    border-color: #93c5fd;
+    color: #1d4ed8;
+}
 
-        .attendance-option span {
-            display: block;
-            margin-top: 5px;
-            color: #6b7280;
-        }
+/* =====================================================
+   PHOTO
+===================================================== */
 
-        .attendance-option.selected-in {
-            border-color: #16a34a;
-            background: #f0fdf4;
-        }
+#photoSection {
+    display: none;
+    margin-top: 20px;
+    text-align: center;
+}
 
-        .attendance-option.selected-out {
-            border-color: #dc2626;
-            background: #fef2f2;
-        }
+#capturedImage {
+    width: 180px;
+    height: 180px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 3px solid #16a34a;
+}
 
-        /* MARK BUTTON */
+/* =====================================================
+   IN OUT
+===================================================== */
 
-        .mark-section {
-            text-align: center;
-            margin-top: 25px;
-        }
+#attendanceTypeCard {
+    display: none;
+}
 
-        #markAttendanceBtn {
-            width: 100%;
-            max-width: 400px;
-            font-size: 17px;
-            padding: 15px;
-        }
+.attendance-options {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+}
 
-        /* STATUS */
+.attendance-option {
+    flex: 1;
+    padding: 20px;
+    border: 2px solid #d1d5db;
+    border-radius: 10px;
+    text-align: center;
+    cursor: pointer;
+}
 
-        #statusText {
-            margin-top: 15px;
-            text-align: center;
-            font-weight: bold;
-        }
+.attendance-option input {
+    display: none;
+}
 
-        /* ATTENDANCE RESULT */
+.attendance-option strong {
+    display: block;
+    font-size: 20px;
+}
 
-        #attendanceResult {
-            display: none;
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: 10px;
-            background: #f0fdf4;
-            border: 1px solid #86efac;
-        }
+.attendance-option span {
+    display: block;
+    margin-top: 5px;
+    color: #6b7280;
+}
 
-        #attendanceResult h3 {
-            color: #15803d;
-            margin-bottom: 12px;
-        }
+.attendance-option.selected-in {
+    border-color: #16a34a;
+    background: #f0fdf4;
+}
 
-        .result-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 7px 0;
-            border-bottom: 1px solid #dcfce7;
-        }
+.attendance-option.selected-out {
+    border-color: #dc2626;
+    background: #fef2f2;
+}
 
-        .result-row:last-child {
-            border-bottom: none;
-        }
+.attendance-option.disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
 
-        .result-label {
-            font-weight: bold;
-        }
+/* =====================================================
+   MARK
+===================================================== */
 
-        /* CURRENT STATUS */
+.mark-section {
+    text-align: center;
+    margin-top: 25px;
+}
 
-        .current-status {
-            display: none;
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: 10px;
-            background: #f8fafc;
-            border: 1px solid #cbd5e1;
-        }
+#markAttendanceBtn {
+    width: 100%;
+    max-width: 400px;
+    font-size: 17px;
+    padding: 15px;
+}
 
-        .current-status h3 {
-            margin-bottom: 10px;
-        }
+#statusText {
+    margin-top: 15px;
+    text-align: center;
+    font-weight: bold;
+}
 
-        .status-in {
-            color: #15803d;
-            font-weight: bold;
-        }
+/* =====================================================
+   RESULT
+===================================================== */
 
-        .status-out {
-            color: #dc2626;
-            font-weight: bold;
-        }
+#attendanceResult {
+    display: none;
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 10px;
+    background: #f0fdf4;
+    border: 1px solid #86efac;
+}
 
-        @media(max-width: 600px) {
+#attendanceResult h3 {
+    color: #15803d;
+    margin-bottom: 12px;
+}
 
-            .login-row {
-                flex-direction: column;
-            }
+.result-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid #dcfce7;
+}
 
-            .attendance-options {
-                flex-direction: column;
-            }
+.result-row:last-child {
+    border-bottom: none;
+}
 
-        }
+.result-label {
+    font-weight: bold;
+}
 
-    </style>
+/* =====================================================
+   CURRENT STATUS
+===================================================== */
+
+.current-status {
+    display: none;
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 10px;
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+}
+
+.current-status h3 {
+    margin-bottom: 10px;
+}
+
+.status-in {
+    color: #15803d;
+    font-weight: bold;
+}
+
+.status-out {
+    color: #dc2626;
+    font-weight: bold;
+}
+
+/* =====================================================
+   LOADING
+===================================================== */
+
+#modelStatus {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media(max-width: 600px) {
+
+    .login-row {
+        flex-direction: column;
+    }
+
+    .attendance-options {
+        flex-direction: column;
+    }
+
+}
+
+</style>
 
 </head>
 
@@ -326,12 +404,11 @@
 </div>
 
 
-
 <div class="container">
 
 
 <!-- =====================================================
-     1. EMAIL LOGIN
+     1. LOGIN
 ===================================================== -->
 
 <div class="card">
@@ -388,15 +465,120 @@
 </div>
 
 
+<!-- =====================================================
+     2. CAMERA
+     
+     IMPORTANT:
+     IN/OUT IS NOT HERE.
+     
+     First face scan.
+===================================================== -->
+
+<div
+    class="card"
+    id="cameraCard"
+    style="display:none;"
+>
+
+    <h2>Face Verification</h2>
+
+    <div class="camera-container">
+
+        <div
+            class="camera-message"
+            id="cameraMessage"
+        >
+            Camera is not started
+        </div>
+
+
+        <video
+            id="camera"
+            autoplay
+            playsinline
+        ></video>
+
+
+        <canvas
+            id="canvas"
+        ></canvas>
+
+
+        <div class="camera-buttons">
+
+            <button
+                class="btn-primary"
+                id="startCameraBtn"
+                onclick="startCamera()"
+            >
+                Start Camera
+            </button>
+
+
+            <button
+                class="btn-success"
+                id="scanFaceBtn"
+                onclick="scanFace()"
+                disabled
+            >
+                Scan Face
+            </button>
+
+
+            <button
+                class="btn-secondary"
+                id="stopCameraBtn"
+                onclick="stopCamera()"
+                disabled
+            >
+                Stop Camera
+            </button>
+
+        </div>
+
+
+        <div
+            id="modelStatus"
+        >
+            Loading face recognition model...
+        </div>
+
+
+        <div
+            class="face-status"
+            id="faceStatus"
+        >
+            Face scan not completed.
+        </div>
+
+
+        <div id="photoSection">
+
+            <p style="margin-bottom:10px;">
+                Captured Face
+            </p>
+
+            <img
+                id="capturedImage"
+                alt="Captured Face"
+            >
+
+        </div>
+
+    </div>
+
+</div>
+
 
 <!-- =====================================================
-     2. IN / OUT
+     3. IN / OUT
+     
+     THIS WILL APPEAR ONLY AFTER FACE SUCCESS
 ===================================================== -->
 
 <div
     class="card"
     id="attendanceTypeCard"
-    style="display:none;"
 >
 
     <h2>Attendance Type</h2>
@@ -425,7 +607,6 @@
             </span>
 
         </label>
-
 
 
         <label
@@ -461,6 +642,7 @@
         <h3>
             Today's Attendance
         </h3>
+
 
         <div class="result-row">
 
@@ -505,100 +687,6 @@
 </div>
 
 
-
-<!-- =====================================================
-     3. CAMERA
-===================================================== -->
-
-<div
-    class="card"
-    id="cameraCard"
-    style="display:none;"
->
-
-    <h2>Face Verification</h2>
-
-
-    <div class="camera-container">
-
-
-        <div
-            class="camera-message"
-            id="cameraMessage"
-        >
-            Camera is not started
-        </div>
-
-
-        <video
-            id="camera"
-            autoplay
-            playsinline
-        ></video>
-
-
-        <canvas
-            id="canvas"
-        ></canvas>
-
-
-        <div class="camera-buttons">
-
-
-            <button
-                class="btn-primary"
-                id="startCameraBtn"
-                onclick="startCamera()"
-            >
-                Start Camera
-            </button>
-
-
-            <button
-                class="btn-success"
-                id="captureBtn"
-                onclick="capturePhoto()"
-                disabled
-            >
-                Capture Face
-            </button>
-
-
-            <button
-                class="btn-secondary"
-                id="stopCameraBtn"
-                onclick="stopCamera()"
-                disabled
-            >
-                Stop Camera
-            </button>
-
-        </div>
-
-
-
-        <!-- CAPTURED PHOTO -->
-
-        <div id="photoSection">
-
-            <p style="margin-bottom:10px;">
-                Captured Face
-            </p>
-
-            <img
-                id="capturedImage"
-                alt="Captured Face"
-            >
-
-        </div>
-
-
-    </div>
-
-</div>
-
-
-
 <!-- =====================================================
      4. MARK ATTENDANCE
 ===================================================== -->
@@ -618,25 +706,20 @@
             class="btn-success"
             id="markAttendanceBtn"
             onclick="markAttendance()"
+            disabled
         >
             MARK ATTENDANCE
         </button>
 
 
         <div id="statusText">
-            Ready
+            Login → Start Camera → Scan Face
         </div>
 
     </div>
 
 
-    <!-- =================================================
-         ATTENDANCE SUCCESS RESULT
-    ================================================== -->
-
-    <div
-        id="attendanceResult"
-    >
+    <div id="attendanceResult">
 
         <h3>
             ✓ Attendance Marked Successfully
@@ -728,13 +811,7 @@
 </div>
 
 
-
-<!-- =====================================================
-     JAVASCRIPT
-===================================================== -->
-
 <script>
-
 
 
 // =====================================================
@@ -749,6 +826,11 @@ let cameraStream = null;
 
 let capturedFaceImage = null;
 
+let currentEmbedding = null;
+
+let faceVerified = false;
+
+let modelsLoaded = false;
 
 
 // =====================================================
@@ -759,6 +841,94 @@ const ATTENDANCE_API_URL =
     "https://script.google.com/macros/s/AKfycbzFV8jtvcMVmRSbHROlQ_-5HIAxPKg-3xbmyeTE5a10JnTQffsctOx3CQyMYGM_IsD3/exec";
 
 
+// =====================================================
+// FACE MODEL PATH
+// =====================================================
+
+const MODEL_URL =
+    "https://cdn.jsdelivr.net/gh/vladmandic/face-api/model/";
+
+
+// =====================================================
+// LOAD FACE MODELS
+// =====================================================
+
+async function loadFaceModels() {
+
+    const status =
+        document.getElementById("modelStatus");
+
+    try {
+
+        status.textContent =
+            "Loading face detection model...";
+
+        await faceapi.nets.tinyFaceDetector.loadFromUri(
+            MODEL_URL
+        );
+
+
+        status.textContent =
+            "Loading face landmark model...";
+
+        await faceapi.nets.faceLandmark68TinyNet.loadFromUri(
+            MODEL_URL
+        );
+
+
+        status.textContent =
+            "Loading face recognition model...";
+
+        await faceapi.nets.faceRecognitionNet.loadFromUri(
+            MODEL_URL
+        );
+
+
+        modelsLoaded = true;
+
+
+        status.textContent =
+            "Face recognition system ready.";
+
+        console.log(
+            "FACE MODELS LOADED"
+        );
+
+    }
+
+    catch (error) {
+
+        console.error(
+            "MODEL LOAD ERROR:",
+            error
+        );
+
+        status.textContent =
+            "Face model loading failed.";
+
+        alert(
+            "Face recognition model load nahi hua.\n\n" +
+            error.message
+        );
+
+    }
+
+}
+
+
+// =====================================================
+// PAGE LOAD
+// =====================================================
+
+window.addEventListener(
+    "load",
+    function() {
+
+        loadFaceModels();
+
+    }
+);
+
 
 // =====================================================
 // LOGIN EMPLOYEE
@@ -768,10 +938,10 @@ async function loginEmployee() {
 
     const email =
         document
-        .getElementById("employeeEmail")
-        .value
-        .trim()
-        .toLowerCase();
+            .getElementById("employeeEmail")
+            .value
+            .trim()
+            .toLowerCase();
 
 
     if (!email) {
@@ -805,18 +975,6 @@ async function loginEmployee() {
 
 
     try {
-
-        /*
-         * Backend ko email bhejna hai.
-         *
-         * Backend employee master se:
-         * Name
-         * Employee ID
-         * Department
-         * Status
-         * etc.
-         * return karega.
-         */
 
         const response =
             await fetch(
@@ -865,12 +1023,9 @@ async function loginEmployee() {
         }
 
 
-        // SAVE EMPLOYEE
+        loggedEmployee =
+            result.employee;
 
-        loggedEmployee = result.employee;
-
-
-        // DISPLAY EMPLOYEE
 
         document
             .getElementById("employeeName")
@@ -902,14 +1057,6 @@ async function loginEmployee() {
                 "block";
 
 
-        // SHOW NEXT SECTIONS
-
-        document
-            .getElementById("attendanceTypeCard")
-            .style.display =
-                "block";
-
-
         document
             .getElementById("cameraCard")
             .style.display =
@@ -922,7 +1069,28 @@ async function loginEmployee() {
                 "block";
 
 
-        // GET TODAY STATUS
+        // IN/OUT HIDDEN UNTIL FACE VERIFIED
+
+        document
+            .getElementById("attendanceTypeCard")
+            .style.display =
+                "none";
+
+
+        document
+            .getElementById("markAttendanceBtn")
+            .disabled =
+                true;
+
+
+        faceVerified = false;
+
+        selectedAttendanceType = null;
+
+        capturedFaceImage = null;
+
+        currentEmbedding = null;
+
 
         await loadTodayAttendance();
 
@@ -930,7 +1098,7 @@ async function loginEmployee() {
         document
             .getElementById("statusText")
             .textContent =
-                "Login successful. Select IN or OUT.";
+                "Login successful. Start camera and scan face.";
 
     }
 
@@ -962,69 +1130,31 @@ async function loginEmployee() {
 }
 
 
-
-// =====================================================
-// SELECT IN / OUT
-// =====================================================
-
-function selectAttendanceType(type) {
-
-    selectedAttendanceType =
-        type;
-
-
-    const inOption =
-        document.getElementById("inOption");
-
-    const outOption =
-        document.getElementById("outOption");
-
-
-    inOption.classList.remove(
-        "selected-in"
-    );
-
-    outOption.classList.remove(
-        "selected-out"
-    );
-
-
-    if (type === "IN") {
-
-        inOption.classList.add(
-            "selected-in"
-        );
-
-        document
-            .getElementById("statusText")
-            .textContent =
-                "IN selected. Capture your face.";
-
-    }
-
-
-    if (type === "OUT") {
-
-        outOption.classList.add(
-            "selected-out"
-        );
-
-        document
-            .getElementById("statusText")
-            .textContent =
-                "OUT selected. Capture your face.";
-
-    }
-
-}
-
-
-
 // =====================================================
 // START CAMERA
 // =====================================================
 
 async function startCamera() {
+
+    if (!modelsLoaded) {
+
+        alert(
+            "Face recognition model abhi load ho raha hai. Thoda wait karo."
+        );
+
+        return;
+    }
+
+
+    if (!loggedEmployee) {
+
+        alert(
+            "Pehle employee login karo."
+        );
+
+        return;
+    }
+
 
     try {
 
@@ -1077,7 +1207,7 @@ async function startCamera() {
 
 
         document
-            .getElementById("captureBtn")
+            .getElementById("scanFaceBtn")
             .disabled =
                 false;
 
@@ -1089,9 +1219,21 @@ async function startCamera() {
 
 
         document
+            .getElementById("faceStatus")
+            .className =
+                "face-status face-processing";
+
+
+        document
+            .getElementById("faceStatus")
+            .textContent =
+                "Camera ready. Face ko camera ke center mein rakho.";
+
+
+        document
             .getElementById("statusText")
             .textContent =
-                "Camera running. Position your face.";
+                "Camera running. Scan Face dabao.";
 
     }
 
@@ -1099,11 +1241,13 @@ async function startCamera() {
     catch (error) {
 
         console.error(
+            "Camera Error:",
             error
         );
 
         alert(
-            "Camera permission nahi mili."
+            "Camera permission nahi mili.\n\n" +
+            error.message
         );
 
     }
@@ -1111,12 +1255,21 @@ async function startCamera() {
 }
 
 
-
 // =====================================================
-// CAPTURE PHOTO
+// SCAN FACE
 // =====================================================
 
-function capturePhoto() {
+async function scanFace() {
+
+    if (!modelsLoaded) {
+
+        alert(
+            "Face model ready nahi hai."
+        );
+
+        return;
+    }
+
 
     if (!cameraStream) {
 
@@ -1132,149 +1285,430 @@ function capturePhoto() {
         document.getElementById("camera");
 
 
-    const canvas =
-        document.getElementById("canvas");
+    const scanButton =
+        document.getElementById("scanFaceBtn");
 
 
-    const width =
-        video.videoWidth;
+    scanButton.disabled =
+        true;
 
 
-    const height =
-        video.videoHeight;
+    scanButton.textContent =
+        "Scanning...";
 
 
-    if (!width || !height) {
+    const faceStatus =
+        document.getElementById("faceStatus");
+
+
+    faceStatus.className =
+        "face-status face-processing";
+
+
+    faceStatus.textContent =
+        "Face detect aur embedding generate ho rahi hai...";
+
+
+    try {
+
+        // ---------------------------------------------
+        // DETECT FACE
+        // ---------------------------------------------
+
+        const detection =
+            await faceapi
+                .detectSingleFace(
+                    video,
+                    new faceapi.TinyFaceDetectorOptions({
+                        inputSize: 416,
+                        scoreThreshold: 0.5
+                    })
+                )
+                .withFaceLandmarks(true)
+                .withFaceDescriptor();
+
+
+        if (!detection) {
+
+            throw new Error(
+                "Face detect nahi hua. Face camera ke saamne clearly rakho."
+            );
+
+        }
+
+
+        // ---------------------------------------------
+        // SINGLE FACE CHECK
+        // ---------------------------------------------
+
+        const allFaces =
+            await faceapi
+                .detectAllFaces(
+                    video,
+                    new faceapi.TinyFaceDetectorOptions({
+                        inputSize: 416,
+                        scoreThreshold: 0.5
+                    })
+                );
+
+
+        if (allFaces.length !== 1) {
+
+            throw new Error(
+                "Camera mein exactly 1 face hona chahiye."
+            );
+
+        }
+
+
+        // ---------------------------------------------
+        // FACE QUALITY
+        // ---------------------------------------------
+
+        const box =
+            detection.detection.box;
+
+
+        if (
+            box.width < 100 ||
+            box.height < 100
+        ) {
+
+            throw new Error(
+                "Face bahut door hai. Camera ke paas aao."
+            );
+
+        }
+
+
+        // ---------------------------------------------
+        // SAVE EMBEDDING
+        // ---------------------------------------------
+
+        currentEmbedding =
+            Array.from(
+                detection.descriptor
+            );
+
+
+        console.log(
+            "FACE EMBEDDING:",
+            currentEmbedding
+        );
+
+
+        console.log(
+            "EMBEDDING LENGTH:",
+            currentEmbedding.length
+        );
+
+
+        // ---------------------------------------------
+        // CAPTURE PHOTO
+        // ---------------------------------------------
+
+        const canvas =
+            document.getElementById("canvas");
+
+
+        const width =
+            video.videoWidth;
+
+
+        const height =
+            video.videoHeight;
+
+
+        canvas.width =
+            width;
+
+
+        canvas.height =
+            height;
+
+
+        const context =
+            canvas.getContext("2d");
+
+
+        context.drawImage(
+            video,
+            0,
+            0,
+            width,
+            height
+        );
+
+
+        capturedFaceImage =
+            canvas.toDataURL(
+                "image/jpeg",
+                0.85
+            );
+
+
+        document
+            .getElementById("capturedImage")
+            .src =
+                capturedFaceImage;
+
+
+        document
+            .getElementById("photoSection")
+            .style.display =
+                "block";
+
+
+        // ---------------------------------------------
+        // SEND EMBEDDING TO BACKEND
+        // ---------------------------------------------
+
+        faceStatus.textContent =
+            "Checking registered face...";
+
+
+        const response =
+            await fetch(
+                ATTENDANCE_API_URL,
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body: JSON.stringify({
+
+                        action:
+                            "verifyFace",
+
+                        employeeId:
+                            loggedEmployee.employeeId,
+
+                        email:
+                            loggedEmployee.email,
+
+                        embedding:
+                            currentEmbedding
+
+                    })
+
+                }
+            );
+
+
+        const result =
+            await response.json();
+
+
+        console.log(
+            "FACE VERIFY RESPONSE:",
+            result
+        );
+
+
+        // ---------------------------------------------
+        // FACE RESULT
+        // ---------------------------------------------
+
+        if (!result.success) {
+
+            faceVerified = false;
+
+            currentEmbedding = null;
+
+
+            faceStatus.className =
+                "face-status face-error";
+
+
+            faceStatus.textContent =
+                result.message ||
+                "Face verification failed.";
+
+
+            document
+                .getElementById("attendanceTypeCard")
+                .style.display =
+                    "none";
+
+
+            document
+                .getElementById("markAttendanceBtn")
+                .disabled =
+                    true;
+
+
+            return;
+        }
+
+
+        // ---------------------------------------------
+        // FACE VERIFIED
+        // ---------------------------------------------
+
+        faceVerified = true;
+
+
+        faceStatus.className =
+            "face-status face-success";
+
+
+        if (result.isNewFace) {
+
+            faceStatus.textContent =
+                "✓ New face registered successfully.";
+
+        }
+
+        else {
+
+            faceStatus.textContent =
+                "✓ Face verified successfully.";
+
+        }
+
+
+        // ---------------------------------------------
+        // SHOW IN / OUT ONLY NOW
+        // ---------------------------------------------
+
+        document
+            .getElementById("attendanceTypeCard")
+            .style.display =
+                "block";
+
+
+        document
+            .getElementById("statusText")
+            .textContent =
+                "Face verified. Ab IN ya OUT select karo.";
+
+
+    }
+
+
+    catch (error) {
+
+        console.error(
+            "Face Scan Error:",
+            error
+        );
+
+
+        faceVerified = false;
+
+        currentEmbedding = null;
+
+
+        faceStatus.className =
+            "face-status face-error";
+
+
+        faceStatus.textContent =
+            error.message ||
+            "Face scan failed.";
+
+
+        document
+            .getElementById("attendanceTypeCard")
+            .style.display =
+                "none";
+
+    }
+
+
+    finally {
+
+        scanButton.disabled =
+            false;
+
+        scanButton.textContent =
+            "Scan Face";
+
+    }
+
+}
+
+
+// =====================================================
+// SELECT IN / OUT
+// =====================================================
+
+function selectAttendanceType(type) {
+
+    if (!faceVerified) {
 
         alert(
-            "Camera abhi ready nahi hai."
+            "Pehle face verify karo."
         );
 
         return;
     }
 
 
-    canvas.width =
-        width;
+    selectedAttendanceType =
+        type;
 
 
-    canvas.height =
-        height;
+    const inOption =
+        document.getElementById("inOption");
 
 
-    const context =
-        canvas.getContext("2d");
+    const outOption =
+        document.getElementById("outOption");
 
 
-    context.drawImage(
-
-        video,
-
-        0,
-
-        0,
-
-        width,
-
-        height
-
+    inOption.classList.remove(
+        "selected-in"
     );
 
 
-    capturedFaceImage =
-        canvas.toDataURL(
-            "image/jpeg",
-            0.90
+    outOption.classList.remove(
+        "selected-out"
+    );
+
+
+    if (type === "IN") {
+
+        inOption.classList.add(
+            "selected-in"
         );
 
 
-    document
-        .getElementById("capturedImage")
-        .src =
-            capturedFaceImage;
+        document
+            .getElementById("statusText")
+            .textContent =
+                "IN selected. GPS location verify hogi.";
 
-
-    document
-        .getElementById("photoSection")
-        .style.display =
-            "block";
-
-
-    document
-        .getElementById("statusText")
-        .textContent =
-            "Face captured. Ready for verification.";
-
-}
-
-
-
-// =====================================================
-// STOP CAMERA
-// =====================================================
-
-function stopCamera() {
-
-    if (cameraStream) {
-
-        cameraStream
-            .getTracks()
-            .forEach(
-                function(track) {
-
-                    track.stop();
-
-                }
-            );
-
-        cameraStream =
-            null;
     }
 
 
-    const video =
-        document.getElementById("camera");
+    if (type === "OUT") {
+
+        outOption.classList.add(
+            "selected-out"
+        );
 
 
-    video.srcObject =
-        null;
+        document
+            .getElementById("statusText")
+            .textContent =
+                "OUT selected. GPS location verify hogi.";
 
-
-    video.style.display =
-        "none";
-
-
-    document
-        .getElementById("cameraMessage")
-        .style.display =
-            "block";
+    }
 
 
     document
-        .getElementById("cameraMessage")
-        .textContent =
-            "Camera is stopped";
-
-
-    document
-        .getElementById("startCameraBtn")
+        .getElementById("markAttendanceBtn")
         .disabled =
             false;
 
-
-    document
-        .getElementById("captureBtn")
-        .disabled =
-            true;
-
-
-    document
-        .getElementById("stopCameraBtn")
-        .disabled =
-            true;
-
 }
-
 
 
 // =====================================================
@@ -1284,7 +1718,6 @@ function stopCamera() {
 function getRealGPS() {
 
     return new Promise(
-
         function(resolve, reject) {
 
             if (!navigator.geolocation) {
@@ -1348,11 +1781,9 @@ function getRealGPS() {
                 );
 
         }
-
     );
 
 }
-
 
 
 // =====================================================
@@ -1361,10 +1792,6 @@ function getRealGPS() {
 
 async function markAttendance() {
 
-
-    // -----------------------------------------------
-    // LOGIN CHECK
-    // -----------------------------------------------
 
     if (!loggedEmployee) {
 
@@ -1376,28 +1803,30 @@ async function markAttendance() {
     }
 
 
-    // -----------------------------------------------
-    // IN / OUT CHECK
-    // -----------------------------------------------
-
-    if (!selectedAttendanceType) {
+    if (!faceVerified) {
 
         alert(
-            "IN ya OUT select karo."
+            "Face verify nahi hua."
         );
 
         return;
     }
 
 
-    // -----------------------------------------------
-    // FACE CHECK
-    // -----------------------------------------------
-
-    if (!capturedFaceImage) {
+    if (!currentEmbedding) {
 
         alert(
-            "Pehle camera se face capture karo."
+            "Face embedding missing hai. Dobara scan karo."
+        );
+
+        return;
+    }
+
+
+    if (!selectedAttendanceType) {
+
+        alert(
+            "IN ya OUT select karo."
         );
 
         return;
@@ -1482,6 +1911,9 @@ async function markAttendance() {
                         longitude:
                             gps.longitude,
 
+                        faceEmbedding:
+                            currentEmbedding,
+
                         faceImage:
                             capturedFaceImage
 
@@ -1502,10 +1934,6 @@ async function markAttendance() {
         );
 
 
-        // -------------------------------------------
-        // SUCCESS
-        // -------------------------------------------
-
         if (result.success) {
 
 
@@ -1514,8 +1942,6 @@ async function markAttendance() {
             );
 
 
-            // Refresh today's status
-
             await loadTodayAttendance();
 
 
@@ -1523,7 +1949,6 @@ async function markAttendance() {
                 .getElementById("statusText")
                 .textContent =
                     "Attendance marked successfully.";
-
 
         }
 
@@ -1564,7 +1989,6 @@ async function markAttendance() {
         alert(
 
             "ATTENDANCE ERROR\n\n" +
-
             error.message
 
         );
@@ -1577,7 +2001,6 @@ async function markAttendance() {
         button.disabled =
             false;
 
-
         button.textContent =
             "MARK ATTENDANCE";
 
@@ -1586,9 +2009,8 @@ async function markAttendance() {
 }
 
 
-
 // =====================================================
-// SHOW ATTENDANCE SUCCESS
+// SHOW SUCCESS
 // =====================================================
 
 function showAttendanceSuccess(result) {
@@ -1665,9 +2087,8 @@ function showAttendanceSuccess(result) {
 }
 
 
-
 // =====================================================
-// LOAD TODAY ATTENDANCE
+// TODAY ATTENDANCE
 // =====================================================
 
 async function loadTodayAttendance() {
@@ -1678,7 +2099,6 @@ async function loadTodayAttendance() {
 
 
     try {
-
 
         const response =
             await fetch(
@@ -1763,31 +2183,31 @@ async function loadTodayAttendance() {
 
 
             // ---------------------------------------
-            // IMPORTANT
+            // Existing IN
             // ---------------------------------------
-
-            /*
-             * Agar IN already laga hua hai,
-             * to IN dobara select nahi karna.
-             */
-
 
             if (attendance.inTime) {
 
                 document
                     .getElementById("inOption")
-                    .style.opacity =
-                        "0.5";
+                    .classList.add(
+                        "disabled"
+                    );
 
             }
 
+
+            // ---------------------------------------
+            // Existing OUT
+            // ---------------------------------------
 
             if (attendance.outTime) {
 
                 document
                     .getElementById("outOption")
-                    .style.opacity =
-                        "0.5";
+                    .classList.add(
+                        "disabled"
+                    );
 
             }
 
@@ -1807,6 +2227,72 @@ async function loadTodayAttendance() {
 
 }
 
+
+// =====================================================
+// STOP CAMERA
+// =====================================================
+
+function stopCamera() {
+
+    if (cameraStream) {
+
+        cameraStream
+            .getTracks()
+            .forEach(
+                function(track) {
+
+                    track.stop();
+
+                }
+            );
+
+        cameraStream =
+            null;
+    }
+
+
+    const video =
+        document.getElementById("camera");
+
+
+    video.srcObject =
+        null;
+
+
+    video.style.display =
+        "none";
+
+
+    document
+        .getElementById("cameraMessage")
+        .style.display =
+            "block";
+
+
+    document
+        .getElementById("cameraMessage")
+        .textContent =
+            "Camera is stopped";
+
+
+    document
+        .getElementById("startCameraBtn")
+        .disabled =
+            false;
+
+
+    document
+        .getElementById("scanFaceBtn")
+        .disabled =
+            true;
+
+
+    document
+        .getElementById("stopCameraBtn")
+        .disabled =
+            true;
+
+}
 
 
 // =====================================================
@@ -1834,9 +2320,7 @@ window.addEventListener(
     }
 );
 
-
 </script>
-
 
 </body>
 
