@@ -25,9 +25,9 @@ const photoSection =
     document.getElementById("photoSection");
 
 
-// ==============================
+// =====================================================
 // START CAMERA
-// ==============================
+// =====================================================
 
 async function startCamera() {
 
@@ -85,9 +85,9 @@ async function startCamera() {
 }
 
 
-// ==============================
+// =====================================================
 // CAPTURE PHOTO
-// ==============================
+// =====================================================
 
 function capturePhoto() {
 
@@ -109,7 +109,7 @@ function capturePhoto() {
     if (width === 0 || height === 0) {
 
         alert(
-            "Camera abhi ready nahi hai. " +
+            "Camera abhi ready nahi hai.\n" +
             "2-3 seconds wait karke dobara try karo."
         );
 
@@ -151,9 +151,9 @@ function capturePhoto() {
 }
 
 
-// ==============================
+// =====================================================
 // STOP CAMERA
-// ==============================
+// =====================================================
 
 function stopCamera() {
 
@@ -194,9 +194,9 @@ function stopCamera() {
 }
 
 
-// ==============================
+// =====================================================
 // PAGE CLOSE / REFRESH
-// ==============================
+// =====================================================
 
 window.addEventListener(
     "beforeunload",
@@ -211,220 +211,300 @@ window.addEventListener(
                     track.stop();
 
                 });
+
+            cameraStream = null;
         }
-        // ==========================================
-// REAL BROWSER GPS
-// ==========================================
-
-function getRealGPS() {
-
-  return new Promise(function(resolve, reject) {
-
-    if (!navigator.geolocation) {
-
-      reject(
-        new Error(
-          "Geolocation is not supported by this browser."
-        )
-      );
-
-      return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-
-      function(position) {
-
-        var latitude =
-          position.coords.latitude;
-
-        var longitude =
-          position.coords.longitude;
-
-        var accuracy =
-          position.coords.accuracy;
-
-        console.log("========== REAL GPS ==========");
-        console.log("Latitude:", latitude);
-        console.log("Longitude:", longitude);
-        console.log("Accuracy:", accuracy, "meters");
-
-        resolve({
-          latitude: latitude,
-          longitude: longitude,
-          accuracy: accuracy
-        });
-      },
-
-      function(error) {
-
-        var message;
-
-        switch (error.code) {
-
-          case error.PERMISSION_DENIED:
-            message = "GPS permission denied.";
-            break;
-
-          case error.POSITION_UNAVAILABLE:
-            message = "GPS location unavailable.";
-            break;
-
-          case error.TIMEOUT:
-            message = "GPS request timed out.";
-            break;
-
-          default:
-            message = "Unable to get GPS location.";
-        }
-
-        reject(new Error(message));
-      },
-
-      {
-        enableHighAccuracy: true,
-        timeout: 15000,
-        maximumAge: 0
-      }
-
-    );
-  });
-}
-
-
-// ==========================================
-// APPS SCRIPT BACKEND URL
-// ==========================================
-
-var ATTENDANCE_API_URL =
-  "https://script.google.com/macros/s/AKfycbzFV8jtvcMVmRSbHROlQ_-5HIAxPKg-3xbmyeTE5a10JnTQffsctOx3CQyMYGM_IsD3/exec";
-
-
-// ==========================================
-// SEND REAL GPS TO BACKEND
-// ==========================================
-
-async function sendGPSToBackend(employeeId) {
-
-  try {
-
-    console.log("========== ATTENDANCE START ==========");
-
-    // --------------------------------------
-    // 1. GET REAL BROWSER GPS
-    // --------------------------------------
-
-    var gps = await getRealGPS();
-
-    console.log("GPS received successfully");
-
-
-    // --------------------------------------
-    // 2. SEND GPS + EMPLOYEE ID
-    // --------------------------------------
-
-    var response = await fetch(
-      ATTENDANCE_API_URL,
-      {
-        method: "POST",
-
-        headers: {
-          "Content-Type":
-            "text/plain;charset=utf-8"
-        },
-
-        body: JSON.stringify({
-
-          employeeId: employeeId,
-
-          latitude: gps.latitude,
-
-          longitude: gps.longitude
-
-        })
-      }
-    );
-
-
-    // --------------------------------------
-    // 3. READ BACKEND RESPONSE
-    // --------------------------------------
-
-    var result = await response.json();
-
-    console.log(
-      "Backend Response:",
-      result
-    );
-
-
-    // --------------------------------------
-    // 4. ATTENDANCE RESULT
-    // --------------------------------------
-
-    if (result.success) {
-
-      alert(
-        "ATTENDANCE MARKED SUCCESSFULLY\n\n" +
-
-        "Employee: " +
-        result.employeeName +
-
-        "\nLocation: " +
-        result.locationName +
-
-        "\nDistance: " +
-        result.distance +
-        " meters" +
-
-        "\nStatus: " +
-        result.status
-      );
-
-    } else {
-
-      alert(
-        "ATTENDANCE REJECTED\n\n" +
-        result.message
-      );
-    }
-
-
-    return result;
-
-
-  } catch (error) {
-
-    console.error(
-      "Attendance Error:",
-      error
-    );
-
-    alert(
-      "ATTENDANCE ERROR\n\n" +
-      error.message
-    );
-
-    return {
-      success: false,
-      message: error.message
-    };
-  }
-}
-
-
-// ==========================================
-// TEST REAL GPS ATTENDANCE
-// ==========================================
-
-function testGPSAttendance() {
-
-  // Temporary testing only
-  // Later Face Recognition will provide
-  // this Employee ID automatically.
-
-  sendGPSToBackend("EMP001");
-}
 
     }
 );
+
+
+// =====================================================
+// REAL BROWSER GPS
+// =====================================================
+
+function getRealGPS() {
+
+    return new Promise(function(resolve, reject) {
+
+        if (!navigator.geolocation) {
+
+            reject(
+                new Error(
+                    "Geolocation is not supported by this browser."
+                )
+            );
+
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+
+            function(position) {
+
+                const latitude =
+                    position.coords.latitude;
+
+                const longitude =
+                    position.coords.longitude;
+
+                const accuracy =
+                    position.coords.accuracy;
+
+                console.log(
+                    "========== REAL GPS =========="
+                );
+
+                console.log(
+                    "Latitude:",
+                    latitude
+                );
+
+                console.log(
+                    "Longitude:",
+                    longitude
+                );
+
+                console.log(
+                    "Accuracy:",
+                    accuracy,
+                    "meters"
+                );
+
+                resolve({
+
+                    latitude: latitude,
+
+                    longitude: longitude,
+
+                    accuracy: accuracy
+
+                });
+
+            },
+
+            function(error) {
+
+                let message;
+
+                switch (error.code) {
+
+                    case error.PERMISSION_DENIED:
+
+                        message =
+                            "GPS permission denied.";
+
+                        break;
+
+                    case error.POSITION_UNAVAILABLE:
+
+                        message =
+                            "GPS location unavailable.";
+
+                        break;
+
+                    case error.TIMEOUT:
+
+                        message =
+                            "GPS request timed out.";
+
+                        break;
+
+                    default:
+
+                        message =
+                            "Unable to get GPS location.";
+                }
+
+                reject(
+                    new Error(message)
+                );
+            },
+
+            {
+                enableHighAccuracy: true,
+
+                timeout: 15000,
+
+                maximumAge: 0
+            }
+
+        );
+    });
+}
+
+
+// =====================================================
+// APPS SCRIPT BACKEND URL
+// =====================================================
+
+const ATTENDANCE_API_URL =
+    "https://script.google.com/macros/s/AKfycbzFV8jtvcMVmRSbHROlQ_-5HIAxPKg-3xbmyeTE5a10JnTQffsctOx3CQyMYGM_IsD3/exec";
+
+
+// =====================================================
+// SEND GPS TO BACKEND
+// =====================================================
+
+async function sendGPSToBackend(employeeId) {
+
+    try {
+
+        console.log(
+            "========== ATTENDANCE START =========="
+        );
+
+
+        // ---------------------------------------------
+        // 1. GET REAL GPS
+        // ---------------------------------------------
+
+        statusText.textContent =
+            "Getting your location...";
+
+        const gps =
+            await getRealGPS();
+
+
+        console.log(
+            "GPS received successfully"
+        );
+
+
+        // ---------------------------------------------
+        // 2. SEND GPS + EMPLOYEE ID
+        // ---------------------------------------------
+
+        statusText.textContent =
+            "Checking location...";
+
+        const response =
+            await fetch(
+                ATTENDANCE_API_URL,
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+                    },
+
+                    body: JSON.stringify({
+
+                        employeeId:
+                            employeeId,
+
+                        latitude:
+                            gps.latitude,
+
+                        longitude:
+                            gps.longitude
+
+                    })
+                }
+            );
+
+
+        // ---------------------------------------------
+        // 3. READ BACKEND RESPONSE
+        // ---------------------------------------------
+
+        const result =
+            await response.json();
+
+
+        console.log(
+            "Backend Response:",
+            result
+        );
+
+
+        // ---------------------------------------------
+        // 4. ATTENDANCE RESULT
+        // ---------------------------------------------
+
+        if (result.success) {
+
+            statusText.textContent =
+                "Attendance marked successfully";
+
+            alert(
+
+                "ATTENDANCE MARKED SUCCESSFULLY\n\n" +
+
+                "Employee: " +
+                result.employeeName +
+
+                "\nLocation: " +
+                result.locationName +
+
+                "\nDistance: " +
+                result.distance +
+                " meters" +
+
+                "\nStatus: " +
+                result.status
+
+            );
+
+        } else {
+
+            statusText.textContent =
+                "Attendance rejected";
+
+            alert(
+
+                "ATTENDANCE REJECTED\n\n" +
+
+                result.message
+            );
+        }
+
+
+        return result;
+
+
+    } catch (error) {
+
+        console.error(
+            "Attendance Error:",
+            error
+        );
+
+        statusText.textContent =
+            "Attendance failed";
+
+        alert(
+
+            "ATTENDANCE ERROR\n\n" +
+
+            error.message
+        );
+
+        return {
+
+            success: false,
+
+            message: error.message
+
+        };
+    }
+}
+
+
+// =====================================================
+// TEST GPS ATTENDANCE
+// =====================================================
+
+function testGPSAttendance() {
+
+    // Temporary testing only.
+    // Later Face Recognition/Login se
+    // Employee ID automatically milega.
+
+    sendGPSToBackend(
+        "EMP001"
+    );
+}
