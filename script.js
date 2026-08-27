@@ -1,7 +1,23 @@
 // =====================================================
 // FACE ATTENDANCE SYSTEM
-// CAMERA + FACE EMBEDDING + FACE REGISTRATION
-// FACE VERIFICATION + GPS + ATTENDANCE
+// COMPLETE FRONTEND SCRIPT
+//
+// FLOW:
+// LOGIN
+//   ↓
+// CAMERA
+//   ↓
+// FACE DETECTION
+//   ↓
+// FACE EMBEDDING
+//   ↓
+// BACKEND FACE REGISTER / VERIFY
+//   ↓
+// IN / OUT
+//   ↓
+// GPS
+//   ↓
+// ATTENDANCE
 // =====================================================
 
 
@@ -23,9 +39,13 @@ let faceVerified = false;
 
 let modelsLoaded = false;
 
+let cameraStarting = false;
+
+let faceScanning = false;
+
 
 // =====================================================
-// APPS SCRIPT BACKEND URL
+// APPS SCRIPT WEB APP URL
 // =====================================================
 
 const ATTENDANCE_API_URL =
@@ -33,11 +53,67 @@ const ATTENDANCE_API_URL =
 
 
 // =====================================================
-// FACE MODEL URL
+// FACE API MODEL URL
 // =====================================================
 
 const MODEL_URL =
     "https://cdn.jsdelivr.net/gh/vladmandic/face-api/model/";
+
+
+// =====================================================
+// HELPER
+// ELEMENT
+// =====================================================
+
+function getElement(id) {
+    return document.getElementById(id);
+}
+
+
+// =====================================================
+// HELPER
+// SET FACE STATUS
+// =====================================================
+
+function setFaceStatus(message, type = "") {
+
+    const element = getElement("faceStatus");
+
+    if (!element) {
+        return;
+    }
+
+    element.className = "face-status";
+
+    if (type === "success") {
+        element.classList.add("face-success");
+    }
+
+    if (type === "error") {
+        element.classList.add("face-error");
+    }
+
+    if (type === "processing") {
+        element.classList.add("face-processing");
+    }
+
+    element.textContent = message;
+}
+
+
+// =====================================================
+// HELPER
+// STATUS TEXT
+// =====================================================
+
+function setStatus(message) {
+
+    const element = getElement("statusText");
+
+    if (element) {
+        element.textContent = message;
+    }
+}
 
 
 // =====================================================
@@ -46,32 +122,42 @@ const MODEL_URL =
 
 async function loadFaceModels() {
 
-    const status =
-        document.getElementById("modelStatus");
+    const status = getElement("modelStatus");
 
     try {
 
-        status.textContent =
-            "Loading face detection model...";
+        modelsLoaded = false;
 
+        if (status) {
+            status.textContent =
+                "Loading face detection model...";
+        }
+
+        console.log("Loading Tiny Face Detector...");
 
         await faceapi.nets.tinyFaceDetector.loadFromUri(
             MODEL_URL
         );
 
 
-        status.textContent =
-            "Loading face landmark model...";
+        if (status) {
+            status.textContent =
+                "Loading face landmark model...";
+        }
 
+        console.log("Loading Face Landmark Model...");
 
         await faceapi.nets.faceLandmark68TinyNet.loadFromUri(
             MODEL_URL
         );
 
 
-        status.textContent =
-            "Loading face recognition model...";
+        if (status) {
+            status.textContent =
+                "Loading face recognition model...";
+        }
 
+        console.log("Loading Face Recognition Model...");
 
         await faceapi.nets.faceRecognitionNet.loadFromUri(
             MODEL_URL
@@ -81,38 +167,44 @@ async function loadFaceModels() {
         modelsLoaded = true;
 
 
-        status.textContent =
-            "Face recognition system ready.";
-
+        if (status) {
+            status.textContent =
+                "✓ Face recognition system ready.";
+        }
 
         console.log(
-            "FACE MODELS LOADED"
+            "===================================="
+        );
+
+        console.log(
+            "FACE MODELS LOADED SUCCESSFULLY"
+        );
+
+        console.log(
+            "===================================="
         );
 
     }
 
     catch (error) {
 
+        modelsLoaded = false;
+
         console.error(
-            "MODEL LOAD ERROR:",
+            "FACE MODEL LOAD ERROR:",
             error
         );
 
-
-        modelsLoaded = false;
-
-
-        status.textContent =
-            "Face model loading failed.";
-
+        if (status) {
+            status.textContent =
+                "Face model loading failed.";
+        }
 
         alert(
             "Face recognition model load nahi hua.\n\n" +
             error.message
         );
-
     }
-
 }
 
 
@@ -122,7 +214,24 @@ async function loadFaceModels() {
 
 window.addEventListener(
     "DOMContentLoaded",
-    function() {
+    function () {
+
+        console.log(
+            "Face Attendance System Loaded"
+        );
+
+        console.log(
+            "Secure Context:",
+            window.isSecureContext
+        );
+
+        console.log(
+            "getUserMedia:",
+            !!(
+                navigator.mediaDevices &&
+                navigator.mediaDevices.getUserMedia
+            )
+        );
 
         loadFaceModels();
 
@@ -136,10 +245,16 @@ window.addEventListener(
 
 async function loginEmployee() {
 
+    const input = getElement("employeeEmail");
+
+    if (!input) {
+        alert("Email input nahi mila.");
+        return;
+    }
+
+
     const email =
-        document
-            .getElementById("employeeEmail")
-            .value
+        input.value
             .trim()
             .toLowerCase();
 
@@ -149,6 +264,8 @@ async function loginEmployee() {
         alert(
             "Company email enter karo."
         );
+
+        input.focus();
 
         return;
     }
@@ -160,12 +277,14 @@ async function loginEmployee() {
             "Valid email enter karo."
         );
 
+        input.focus();
+
         return;
     }
 
 
     const loginBtn =
-        document.getElementById("loginBtn");
+        getElement("loginBtn");
 
 
     loginBtn.disabled = true;
@@ -176,32 +295,20 @@ async function loginEmployee() {
 
     try {
 
-        const response =
-            await fetch(
-                ATTENDANCE_API_URL,
-                {
-
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-                    },
-
-                    body: JSON.stringify({
-
-                        action: "login",
-
-                        email: email
-
-                    })
-
-                }
-            );
+        console.log(
+            "LOGIN REQUEST:",
+            email
+        );
 
 
         const result =
-            await response.json();
+            await callBackend({
+
+                action: "login",
+
+                email: email
+
+            });
 
 
         console.log(
@@ -210,14 +317,20 @@ async function loginEmployee() {
         );
 
 
-        if (!result.success) {
+        if (!result || !result.success) {
 
-            alert(
-                result.message ||
+            throw new Error(
+                result?.message ||
                 "Employee login failed."
             );
+        }
 
-            return;
+
+        if (!result.employee) {
+
+            throw new Error(
+                "Backend ne employee data return nahi kiya."
+            );
         }
 
 
@@ -225,59 +338,52 @@ async function loginEmployee() {
             result.employee;
 
 
-        document
-            .getElementById("employeeName")
-            .textContent =
-                loggedEmployee.name || "-";
+        // =================================================
+        // EMPLOYEE INFORMATION
+        // =================================================
+
+        getElement("employeeName").textContent =
+            loggedEmployee.name || "-";
 
 
-        document
-            .getElementById("employeeId")
-            .textContent =
-                loggedEmployee.employeeId || "-";
+        getElement("employeeId").textContent =
+            loggedEmployee.employeeId || "-";
 
 
-        document
-            .getElementById("employeeDepartment")
-            .textContent =
-                loggedEmployee.department || "-";
+        getElement("employeeDepartment").textContent =
+            loggedEmployee.department || "-";
 
 
-        document
-            .getElementById("loggedEmail")
-            .textContent =
-                loggedEmployee.email || email;
+        getElement("loggedEmail").textContent =
+            loggedEmployee.email || email;
 
 
-        document
-            .getElementById("employeeInfo")
-            .style.display =
-                "block";
+        getElement("employeeInfo").style.display =
+            "block";
 
 
-        document
-            .getElementById("cameraCard")
-            .style.display =
-                "block";
+        // =================================================
+        // SHOW CAMERA
+        // =================================================
+
+        getElement("cameraCard").style.display =
+            "block";
 
 
-        document
-            .getElementById("markCard")
-            .style.display =
-                "block";
+        getElement("markCard").style.display =
+            "block";
 
 
-        document
-            .getElementById("attendanceTypeCard")
-            .style.display =
-                "none";
+        // IMPORTANT:
+        // IN/OUT hidden until face verified
+
+        getElement("attendanceTypeCard").style.display =
+            "none";
 
 
-        document
-            .getElementById("markAttendanceBtn")
-            .disabled =
-                true;
-
+        // =================================================
+        // RESET FACE STATE
+        // =================================================
 
         faceVerified = false;
 
@@ -288,40 +394,69 @@ async function loginEmployee() {
         currentEmbedding = null;
 
 
-        // Reset IN / OUT state
+        getElement("markAttendanceBtn").disabled =
+            true;
 
-        document
-            .getElementById("inOption")
-            .classList.remove("selected-in");
 
-        document
-            .getElementById("outOption")
-            .classList.remove("selected-out");
+        getElement("scanFaceBtn").disabled =
+            true;
 
-        document
-            .getElementById("inOption")
-            .classList.remove("disabled");
 
-        document
-            .getElementById("outOption")
-            .classList.remove("disabled");
+        // =================================================
+        // RESET PHOTO
+        // =================================================
 
+        getElement("photoSection").style.display =
+            "none";
+
+
+        getElement("capturedImage").src =
+            "";
+
+
+        // =================================================
+        // RESET IN / OUT
+        // =================================================
+
+        resetAttendanceSelection();
+
+
+        // =================================================
+        // TODAY ATTENDANCE
+        // =================================================
 
         await loadTodayAttendance();
 
 
-        document
-            .getElementById("statusText")
-            .textContent =
-                "Login successful. Start camera and scan face.";
+        setStatus(
+            "Login successful. Start camera and scan face."
+        );
+
+
+        setFaceStatus(
+            modelsLoaded
+                ? "Face scan not completed."
+                : "Face model loading..."
+        );
+
+
+        // =================================================
+        // SCROLL CAMERA
+        // =================================================
+
+        getElement("cameraCard")
+            .scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
 
     }
-
 
     catch (error) {
 
         console.error(
-            "Login Error:",
+            "LOGIN ERROR:",
             error
         );
 
@@ -333,16 +468,204 @@ async function loginEmployee() {
 
     }
 
-
     finally {
 
         loginBtn.disabled = false;
 
         loginBtn.textContent =
             "Login";
+    }
+}
+
+
+// =====================================================
+// BACKEND CALL
+// =====================================================
+
+async function callBackend(payload) {
+
+    console.log(
+        "BACKEND REQUEST:",
+        payload.action
+    );
+
+
+    const response =
+        await fetch(
+            ATTENDANCE_API_URL,
+            {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "text/plain;charset=utf-8"
+                },
+
+                body:
+                    JSON.stringify(payload)
+
+            }
+        );
+
+
+    if (!response.ok) {
+
+        throw new Error(
+            "Backend HTTP error: " +
+            response.status
+        );
+    }
+
+
+    const text =
+        await response.text();
+
+
+    console.log(
+        "BACKEND RAW RESPONSE:",
+        text
+    );
+
+
+    let result;
+
+
+    try {
+
+        result =
+            JSON.parse(text);
 
     }
 
+    catch (error) {
+
+        throw new Error(
+            "Backend ne valid JSON response nahi diya.\n\n" +
+            text.substring(0, 500)
+        );
+    }
+
+
+    return result;
+}
+
+
+// =====================================================
+// CHECK CAMERA SUPPORT
+// =====================================================
+
+function checkCameraSupport() {
+
+    if (
+        !navigator.mediaDevices ||
+        !navigator.mediaDevices.getUserMedia
+    ) {
+
+        return {
+            success: false,
+            message:
+                "Is browser/environment mein camera API available nahi hai."
+        };
+    }
+
+
+    if (!window.isSecureContext) {
+
+        return {
+            success: false,
+            message:
+                "Camera ke liye HTTPS required hai.\n\n" +
+                "GitHub Pages par app open karo ya localhost use karo."
+        };
+    }
+
+
+    return {
+        success: true
+    };
+}
+
+
+// =====================================================
+// WAIT FOR VIDEO READY
+// =====================================================
+
+function waitForVideoReady(video) {
+
+    return new Promise(
+        function(resolve, reject) {
+
+            if (
+                video.readyState >= 2 &&
+                video.videoWidth > 0 &&
+                video.videoHeight > 0
+            ) {
+
+                resolve();
+
+                return;
+            }
+
+
+            let timeout;
+
+
+            const onReady = function() {
+
+                cleanup();
+
+                resolve();
+            };
+
+
+            const cleanup = function() {
+
+                video.removeEventListener(
+                    "loadedmetadata",
+                    onReady
+                );
+
+                video.removeEventListener(
+                    "canplay",
+                    onReady
+                );
+
+                clearTimeout(timeout);
+            };
+
+
+            video.addEventListener(
+                "loadedmetadata",
+                onReady,
+                { once: true }
+            );
+
+
+            video.addEventListener(
+                "canplay",
+                onReady,
+                { once: true }
+            );
+
+
+            timeout =
+                setTimeout(
+                    function() {
+
+                        cleanup();
+
+                        reject(
+                            new Error(
+                                "Camera video stream ready nahi hua."
+                            )
+                        );
+
+                    },
+                    10000
+                );
+        }
+    );
 }
 
 
@@ -352,12 +675,7 @@ async function loginEmployee() {
 
 async function startCamera() {
 
-    if (!modelsLoaded) {
-
-        alert(
-            "Face recognition model abhi load ho raha hai. Thoda wait karo."
-        );
-
+    if (cameraStarting) {
         return;
     }
 
@@ -372,103 +690,324 @@ async function startCamera() {
     }
 
 
+    if (!modelsLoaded) {
+
+        alert(
+            "Face recognition model abhi ready nahi hai.\n\n" +
+            "Model status check karo aur 5-10 seconds wait karo."
+        );
+
+        return;
+    }
+
+
+    const cameraCheck =
+        checkCameraSupport();
+
+
+    if (!cameraCheck.success) {
+
+        alert(
+            cameraCheck.message
+        );
+
+        console.error(
+            "CAMERA SUPPORT ERROR:",
+            cameraCheck.message
+        );
+
+        return;
+    }
+
+
+    cameraStarting = true;
+
+
+    const startBtn =
+        getElement("startCameraBtn");
+
+    const scanBtn =
+        getElement("scanFaceBtn");
+
+    const stopBtn =
+        getElement("stopCameraBtn");
+
+    const video =
+        getElement("camera");
+
+    const message =
+        getElement("cameraMessage");
+
+
     try {
 
+        // =================================================
+        // STOP OLD STREAM
+        // =================================================
+
+        if (cameraStream) {
+
+            cameraStream
+                .getTracks()
+                .forEach(
+                    function(track) {
+                        track.stop();
+                    }
+                );
+
+            cameraStream = null;
+        }
+
+
+        setStatus(
+            "Requesting camera permission..."
+        );
+
+
+        setFaceStatus(
+            "Opening camera...",
+            "processing"
+        );
+
+
+        // =================================================
+        // REQUEST CAMERA
+        // =================================================
+
         cameraStream =
-            await navigator
-                .mediaDevices
-                .getUserMedia({
+            await navigator.mediaDevices.getUserMedia({
 
-                    video: {
+                video: {
 
-                        facingMode: "user",
-
-                        width: {
-                            ideal: 1280
-                        },
-
-                        height: {
-                            ideal: 720
-                        }
-
+                    facingMode: {
+                        ideal: "user"
                     },
 
-                    audio: false
+                    width: {
+                        ideal: 1280,
+                        min: 320
+                    },
 
-                });
+                    height: {
+                        ideal: 720,
+                        min: 240
+                    },
+
+                    frameRate: {
+                        ideal: 30
+                    }
+
+                },
+
+                audio: false
+
+            });
 
 
-        const video =
-            document.getElementById("camera");
+        console.log(
+            "CAMERA STREAM:",
+            cameraStream
+        );
 
+
+        // =================================================
+        // ATTACH STREAM
+        // =================================================
 
         video.srcObject =
             cameraStream;
 
 
+        video.muted = true;
+
+        video.autoplay = true;
+
+        video.playsInline = true;
+
+
+        // =================================================
+        // SHOW VIDEO
+        // =================================================
+
         video.style.display =
             "block";
 
 
-        document
-            .getElementById("cameraMessage")
-            .style.display =
-                "none";
+        message.style.display =
+            "none";
 
 
-        document
-            .getElementById("startCameraBtn")
-            .disabled =
-                true;
+        // =================================================
+        // WAIT VIDEO READY
+        // =================================================
+
+        await waitForVideoReady(
+            video
+        );
 
 
-        document
-            .getElementById("scanFaceBtn")
-            .disabled =
-                false;
+        // =================================================
+        // PLAY VIDEO
+        // =================================================
+
+        try {
+
+            await video.play();
+
+        }
+
+        catch (playError) {
+
+            console.warn(
+                "VIDEO PLAY WARNING:",
+                playError
+            );
+        }
 
 
-        document
-            .getElementById("stopCameraBtn")
-            .disabled =
-                false;
+        console.log(
+            "VIDEO WIDTH:",
+            video.videoWidth
+        );
+
+        console.log(
+            "VIDEO HEIGHT:",
+            video.videoHeight
+        );
 
 
-        document
-            .getElementById("faceStatus")
-            .className =
-                "face-status face-processing";
+        // =================================================
+        // ENABLE BUTTONS
+        // =================================================
+
+        startBtn.disabled =
+            true;
 
 
-        document
-            .getElementById("faceStatus")
-            .textContent =
-                "Camera ready. Face ko camera ke center mein rakho.";
+        scanBtn.disabled =
+            false;
 
 
-        document
-            .getElementById("statusText")
-            .textContent =
-                "Camera running. Scan Face dabao.";
+        stopBtn.disabled =
+            false;
+
+
+        setFaceStatus(
+            "✓ Camera ready. Face ko camera ke center mein rakho.",
+            "processing"
+        );
+
+
+        setStatus(
+            "Camera running. Scan Face dabao."
+        );
+
 
     }
-
 
     catch (error) {
 
         console.error(
-            "Camera Error:",
+            "CAMERA ERROR:",
             error
         );
 
 
+        // Stop partial stream
+
+        if (cameraStream) {
+
+            cameraStream
+                .getTracks()
+                .forEach(
+                    function(track) {
+                        track.stop();
+                    }
+                );
+
+            cameraStream = null;
+        }
+
+
+        video.srcObject =
+            null;
+
+        video.style.display =
+            "none";
+
+        message.style.display =
+            "block";
+
+
+        let errorMessage =
+            "Camera open nahi hua.";
+
+
+        if (error.name === "NotAllowedError") {
+
+            errorMessage =
+                "Camera permission denied.\n\n" +
+                "Browser address bar ke camera icon par click karke Allow karo.";
+        }
+
+        else if (error.name === "NotFoundError") {
+
+            errorMessage =
+                "Camera device nahi mila.\n\n" +
+                "Laptop/PC camera connected hai ya nahi check karo.";
+        }
+
+        else if (error.name === "NotReadableError") {
+
+            errorMessage =
+                "Camera kisi doosre application ke use mein hai.\n\n" +
+                "Zoom, Teams, WhatsApp, Camera app etc. close karo.";
+        }
+
+        else if (error.name === "OverconstrainedError") {
+
+            errorMessage =
+                "Camera resolution supported nahi hai.\n\n" +
+                "Basic camera settings ke saath dobara try karo.";
+        }
+
+        else if (error.name === "SecurityError") {
+
+            errorMessage =
+                "Browser security ne camera block kiya hai.\n\n" +
+                "App ko HTTPS/GitHub Pages par open karo.";
+        }
+
+        else {
+
+            errorMessage +=
+                "\n\n" +
+                error.message;
+        }
+
+
+        setFaceStatus(
+            errorMessage,
+            "error"
+        );
+
+
+        setStatus(
+            "Camera failed."
+        );
+
+
         alert(
-            "Camera permission nahi mili.\n\n" +
-            error.message
+            errorMessage
         );
 
     }
 
+    finally {
+
+        cameraStarting = false;
+
+    }
 }
 
 
@@ -477,6 +1016,11 @@ async function startCamera() {
 // =====================================================
 
 async function scanFace() {
+
+    if (faceScanning) {
+        return;
+    }
+
 
     if (!modelsLoaded) {
 
@@ -499,51 +1043,48 @@ async function scanFace() {
 
 
     const video =
-        document.getElementById("camera");
+        getElement("camera");
 
 
     const scanButton =
-        document.getElementById("scanFaceBtn");
-
-
-    const faceStatus =
-        document.getElementById("faceStatus");
-
-
-    scanButton.disabled = true;
-
-    scanButton.textContent =
-        "Scanning...";
-
-
-    faceStatus.className =
-        "face-status face-processing";
-
-
-    faceStatus.textContent =
-        "Face detect aur embedding generate ho rahi hai...";
+        getElement("scanFaceBtn");
 
 
     try {
 
+        faceScanning = true;
+
+        scanButton.disabled =
+            true;
+
+        scanButton.textContent =
+            "Scanning...";
+
+
+        setFaceStatus(
+            "Face detect aur embedding generate ho rahi hai...",
+            "processing"
+        );
+
+
         // =================================================
-        // 1. CHECK VIDEO READY
+        // VIDEO CHECK
         // =================================================
 
         if (
+            video.readyState < 2 ||
             video.videoWidth === 0 ||
             video.videoHeight === 0
         ) {
 
             throw new Error(
-                "Camera abhi ready nahi hai. 2-3 seconds wait karo."
+                "Camera abhi ready nahi hai. 2-3 seconds wait karke dobara scan karo."
             );
-
         }
 
 
         // =================================================
-        // 2. DETECT SINGLE FACE
+        // DETECT FACE + LANDMARK + DESCRIPTOR
         // =================================================
 
         const detection =
@@ -562,14 +1103,14 @@ async function scanFace() {
         if (!detection) {
 
             throw new Error(
-                "Face detect nahi hua. Face camera ke saamne clearly rakho."
+                "Face detect nahi hua.\n\n" +
+                "Face ko camera ke center mein rakho aur lighting improve karo."
             );
-
         }
 
 
         // =================================================
-        // 3. EXACTLY ONE FACE CHECK
+        // CHECK EXACTLY ONE FACE
         // =================================================
 
         const allFaces =
@@ -583,21 +1124,32 @@ async function scanFace() {
                 );
 
 
+        console.log(
+            "TOTAL FACES:",
+            allFaces.length
+        );
+
+
         if (allFaces.length !== 1) {
 
             throw new Error(
                 "Camera mein exactly 1 face hona chahiye."
             );
-
         }
 
 
         // =================================================
-        // 4. FACE QUALITY CHECK
+        // FACE QUALITY
         // =================================================
 
         const box =
             detection.detection.box;
+
+
+        console.log(
+            "FACE BOX:",
+            box
+        );
 
 
         if (
@@ -606,14 +1158,37 @@ async function scanFace() {
         ) {
 
             throw new Error(
-                "Face bahut door hai. Camera ke paas aao."
+                "Face bahut chhota hai.\n\n" +
+                "Camera ke thoda paas aao."
             );
-
         }
 
 
         // =================================================
-        // 5. GENERATE FACE EMBEDDING
+        // DETECTION SCORE
+        // =================================================
+
+        const score =
+            detection.detection.score;
+
+
+        console.log(
+            "FACE DETECTION SCORE:",
+            score
+        );
+
+
+        if (score < 0.5) {
+
+            throw new Error(
+                "Face image quality low hai.\n\n" +
+                "Camera ke saamne seedha dekho."
+            );
+        }
+
+
+        // =================================================
+        // FACE EMBEDDING
         // =================================================
 
         currentEmbedding =
@@ -626,7 +1201,6 @@ async function scanFace() {
             "FACE EMBEDDING GENERATED"
         );
 
-
         console.log(
             "EMBEDDING LENGTH:",
             currentEmbedding.length
@@ -637,21 +1211,22 @@ async function scanFace() {
             currentEmbedding.length !== 128
         ) {
 
-            currentEmbedding = null;
+            currentEmbedding =
+                null;
 
             throw new Error(
-                "Invalid face embedding. 128 values expected."
+                "Invalid face embedding.\n\n" +
+                "128 values expected."
             );
-
         }
 
 
         // =================================================
-        // 6. CAPTURE PHOTO
+        // CAPTURE IMAGE
         // =================================================
 
         const canvas =
-            document.getElementById("canvas");
+            getElement("canvas");
 
 
         const width =
@@ -690,79 +1265,54 @@ async function scanFace() {
             );
 
 
-        document
-            .getElementById("capturedImage")
-            .src =
-                capturedFaceImage;
+        getElement("capturedImage").src =
+            capturedFaceImage;
 
 
-        document
-            .getElementById("photoSection")
-            .style.display =
-                "block";
+        getElement("photoSection").style.display =
+            "block";
 
 
         // =================================================
-        // 7. SEND FACE TO BACKEND
+        // BACKEND FACE VERIFICATION
         // =================================================
 
-        faceStatus.textContent =
-            "Checking registered face...";
+        setFaceStatus(
+            "Face embedding generated. Registered face check ho raha hai...",
+            "processing"
+        );
 
 
-        const response =
-            await fetch(
-                ATTENDANCE_API_URL,
-                {
-
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-                    },
-
-                    body: JSON.stringify({
-
-                        action:
-                            "verifyFace",
-
-                        employeeId:
-                            loggedEmployee.employeeId,
-
-                        email:
-                            loggedEmployee.email,
-
-                        name:
-                            loggedEmployee.name,
-
-                        department:
-                            loggedEmployee.department,
-
-                        embedding:
-                            currentEmbedding,
-
-                        faceImage:
-                            capturedFaceImage
-
-                    })
-
-                }
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Face verification HTTP error: " +
-                response.status
-            );
-
-        }
+        setStatus(
+            "Checking registered face..."
+        );
 
 
         const result =
-            await response.json();
+            await callBackend({
+
+                action:
+                    "verifyFace",
+
+                employeeId:
+                    loggedEmployee.employeeId,
+
+                email:
+                    loggedEmployee.email,
+
+                name:
+                    loggedEmployee.name,
+
+                department:
+                    loggedEmployee.department,
+
+                embedding:
+                    currentEmbedding,
+
+                faceImage:
+                    capturedFaceImage
+
+            });
 
 
         console.log(
@@ -772,145 +1322,169 @@ async function scanFace() {
 
 
         // =================================================
-        // 8. FACE REJECTED
+        // FACE REJECTED
         // =================================================
 
-        if (!result.success) {
+        if (
+            !result ||
+            !result.success
+        ) {
 
-            faceVerified = false;
+            faceVerified =
+                false;
 
-            currentEmbedding = null;
-
-
-            faceStatus.className =
-                "face-status face-error";
-
-
-            faceStatus.textContent =
-                result.message ||
-                "Face verification failed.";
+            currentEmbedding =
+                null;
 
 
-            document
-                .getElementById("attendanceTypeCard")
-                .style.display =
-                    "none";
+            setFaceStatus(
+                result?.message ||
+                "Face verification failed.",
+                "error"
+            );
 
 
-            document
-                .getElementById("markAttendanceBtn")
-                .disabled =
-                    true;
+            getElement(
+                "attendanceTypeCard"
+            ).style.display =
+                "none";
+
+
+            getElement(
+                "markAttendanceBtn"
+            ).disabled =
+                true;
+
+
+            setStatus(
+                "Face verification failed."
+            );
 
 
             return;
-
         }
 
 
         // =================================================
-        // 9. NEW FACE REGISTERED
+        // NEW FACE REGISTERED
         // =================================================
 
-        if (result.isNewFace === true) {
+        if (
+            result.isNewFace === true
+        ) {
 
-            faceVerified = true;
+            faceVerified =
+                true;
 
 
-            faceStatus.className =
-                "face-status face-success";
-
-
-            faceStatus.textContent =
-                "✓ New face registered successfully.";
+            setFaceStatus(
+                "✓ New face registered successfully.",
+                "success"
+            );
 
 
             console.log(
                 "NEW FACE REGISTRATION CONFIRMED"
             );
-
         }
 
 
         // =================================================
-        // 10. EXISTING FACE VERIFIED
+        // EXISTING FACE VERIFIED
         // =================================================
 
         else {
 
-            faceVerified = true;
+            faceVerified =
+                true;
 
 
-            faceStatus.className =
-                "face-status face-success";
-
-
-            faceStatus.textContent =
-                "✓ Face verified successfully.";
+            setFaceStatus(
+                "✓ Face verified successfully.",
+                "success"
+            );
 
 
             console.log(
                 "EXISTING FACE MATCH CONFIRMED"
             );
-
         }
 
 
         // =================================================
-        // 11. SHOW IN / OUT
+        // SHOW IN / OUT
         // =================================================
 
-        document
-            .getElementById("attendanceTypeCard")
-            .style.display =
-                "block";
+        getElement(
+            "attendanceTypeCard"
+        ).style.display =
+            "block";
 
 
-        document
-            .getElementById("statusText")
-            .textContent =
-                "Face verified. Ab IN ya OUT select karo.";
+        setStatus(
+            "Face verified. Ab IN ya OUT select karo."
+        );
+
+
+        // =================================================
+        // SCROLL TO IN/OUT
+        // =================================================
+
+        getElement(
+            "attendanceTypeCard"
+        ).scrollIntoView({
+            behavior: "smooth",
+            block: "center"
+        });
 
     }
-
 
     catch (error) {
 
         console.error(
-            "Face Scan Error:",
+            "FACE SCAN ERROR:",
             error
         );
 
 
-        faceVerified = false;
-
-        currentEmbedding = null;
-
-
-        faceStatus.className =
-            "face-status face-error";
+        faceVerified =
+            false;
 
 
-        faceStatus.textContent =
+        currentEmbedding =
+            null;
+
+
+        setFaceStatus(
             error.message ||
-            "Face scan failed.";
+            "Face scan failed.",
+            "error"
+        );
 
 
-        document
-            .getElementById("attendanceTypeCard")
-            .style.display =
-                "none";
+        getElement(
+            "attendanceTypeCard"
+        ).style.display =
+            "none";
 
 
-        document
-            .getElementById("markAttendanceBtn")
-            .disabled =
-                true;
+        getElement(
+            "markAttendanceBtn"
+        ).disabled =
+            true;
+
+
+        setStatus(
+            "Face scan failed. Dobara try karo."
+        );
 
     }
 
-
     finally {
+
+        faceScanning =
+            false;
+
 
         scanButton.disabled =
             false;
@@ -918,9 +1492,64 @@ async function scanFace() {
 
         scanButton.textContent =
             "Scan Face";
-
     }
+}
 
+
+// =====================================================
+// RESET IN / OUT
+// =====================================================
+
+function resetAttendanceSelection() {
+
+    selectedAttendanceType =
+        null;
+
+
+    const inOption =
+        getElement("inOption");
+
+
+    const outOption =
+        getElement("outOption");
+
+
+    inOption.classList.remove(
+        "selected-in"
+    );
+
+
+    outOption.classList.remove(
+        "selected-out"
+    );
+
+
+    inOption.classList.remove(
+        "disabled"
+    );
+
+
+    outOption.classList.remove(
+        "disabled"
+    );
+
+
+    const radios =
+        document.querySelectorAll(
+            'input[name="attendanceType"]'
+        );
+
+
+    radios.forEach(
+        function(radio) {
+            radio.checked = false;
+        }
+    );
+
+
+    getElement(
+        "markAttendanceBtn"
+    ).disabled = true;
 }
 
 
@@ -940,16 +1569,55 @@ function selectAttendanceType(type) {
     }
 
 
-    selectedAttendanceType =
-        type;
+    if (
+        type !== "IN" &&
+        type !== "OUT"
+    ) {
+
+        return;
+    }
 
 
     const inOption =
-        document.getElementById("inOption");
+        getElement("inOption");
 
 
     const outOption =
-        document.getElementById("outOption");
+        getElement("outOption");
+
+
+    // =================================================
+    // CHECK IF OPTION DISABLED
+    // =================================================
+
+    if (
+        type === "IN" &&
+        inOption.classList.contains("disabled")
+    ) {
+
+        alert(
+            "Aaj ka IN already marked hai."
+        );
+
+        return;
+    }
+
+
+    if (
+        type === "OUT" &&
+        outOption.classList.contains("disabled")
+    ) {
+
+        alert(
+            "Aaj ka OUT already marked hai."
+        );
+
+        return;
+    }
+
+
+    selectedAttendanceType =
+        type;
 
 
     inOption.classList.remove(
@@ -969,11 +1637,9 @@ function selectAttendanceType(type) {
         );
 
 
-        document
-            .getElementById("statusText")
-            .textContent =
-                "IN selected. GPS location verify hogi.";
-
+        setStatus(
+            "IN selected. GPS location verify hogi."
+        );
     }
 
 
@@ -984,19 +1650,16 @@ function selectAttendanceType(type) {
         );
 
 
-        document
-            .getElementById("statusText")
-            .textContent =
-                "OUT selected. GPS location verify hogi.";
-
+        setStatus(
+            "OUT selected. GPS location verify hogi."
+        );
     }
 
 
-    document
-        .getElementById("markAttendanceBtn")
-        .disabled =
-            false;
-
+    getElement(
+        "markAttendanceBtn"
+    ).disabled =
+        false;
 }
 
 
@@ -1013,7 +1676,7 @@ function getRealGPS() {
 
                 reject(
                     new Error(
-                        "GPS not supported."
+                        "GPS browser mein supported nahi hai."
                     )
                 );
 
@@ -1021,92 +1684,97 @@ function getRealGPS() {
             }
 
 
-            navigator
-                .geolocation
-                .getCurrentPosition(
+            navigator.geolocation.getCurrentPosition(
 
-                    function(position) {
+                function(position) {
 
-                        resolve({
-
-                            latitude:
-                                position.coords.latitude,
-
-                            longitude:
-                                position.coords.longitude,
-
-                            accuracy:
-                                position.coords.accuracy
-
-                        });
-
-                    },
+                    console.log(
+                        "GPS POSITION:",
+                        position.coords
+                    );
 
 
-                    function(error) {
+                    resolve({
 
-                        let message;
+                        latitude:
+                            position.coords.latitude,
 
+                        longitude:
+                            position.coords.longitude,
 
-                        switch (error.code) {
+                        accuracy:
+                            position.coords.accuracy
 
-                            case error.PERMISSION_DENIED:
+                    });
 
-                                message =
-                                    "GPS permission denied.";
-
-                                break;
-
-
-                            case error.POSITION_UNAVAILABLE:
-
-                                message =
-                                    "GPS location unavailable.";
-
-                                break;
+                },
 
 
-                            case error.TIMEOUT:
+                function(error) {
 
-                                message =
-                                    "GPS request timed out.";
-
-                                break;
-
-
-                            default:
-
-                                message =
-                                    "Unable to get GPS location.";
-
-                        }
+                    console.error(
+                        "GPS ERROR:",
+                        error
+                    );
 
 
-                        reject(
-                            new Error(message)
-                        );
-
-                    },
+                    let message;
 
 
-                    {
+                    switch (error.code) {
 
-                        enableHighAccuracy:
-                            true,
+                        case error.PERMISSION_DENIED:
 
-                        timeout:
-                            15000,
+                            message =
+                                "GPS permission denied.";
 
-                        maximumAge:
-                            0
+                            break;
 
+
+                        case error.POSITION_UNAVAILABLE:
+
+                            message =
+                                "GPS location unavailable.";
+
+                            break;
+
+
+                        case error.TIMEOUT:
+
+                            message =
+                                "GPS request timed out.";
+
+                            break;
+
+
+                        default:
+
+                            message =
+                                "Unable to get GPS location.";
                     }
 
-                );
 
+                    reject(
+                        new Error(message)
+                    );
+                },
+
+
+                {
+
+                    enableHighAccuracy:
+                        true,
+
+                    timeout:
+                        15000,
+
+                    maximumAge:
+                        0
+
+                }
+            );
         }
     );
-
 }
 
 
@@ -1136,10 +1804,14 @@ async function markAttendance() {
     }
 
 
-    if (!currentEmbedding) {
+    if (
+        !currentEmbedding ||
+        currentEmbedding.length !== 128
+    ) {
 
         alert(
-            "Face embedding missing hai. Dobara scan karo."
+            "Face embedding missing hai.\n\n" +
+            "Dobara face scan karo."
         );
 
         return;
@@ -1157,12 +1829,14 @@ async function markAttendance() {
 
 
     const button =
-        document.getElementById(
+        getElement(
             "markAttendanceBtn"
         );
 
 
-    button.disabled = true;
+    button.disabled =
+        true;
+
 
     button.textContent =
         "VERIFYING...";
@@ -1174,90 +1848,88 @@ async function markAttendance() {
         // GPS
         // =================================================
 
-        document
-            .getElementById("statusText")
-            .textContent =
-                "Getting GPS location...";
+        setStatus(
+            "Getting GPS location..."
+        );
 
 
         const gps =
             await getRealGPS();
 
 
+        console.log(
+            "GPS:",
+            gps
+        );
+
+
         // =================================================
-        // BACKEND
+        // GPS ACCURACY CHECK
         // =================================================
 
-        document
-            .getElementById("statusText")
-            .textContent =
-                "Verifying face and location...";
+        if (
+            gps.accuracy &&
+            gps.accuracy > 200
+        ) {
+
+            const continueAnyway =
+                confirm(
+                    "GPS accuracy low hai: " +
+                    Math.round(gps.accuracy) +
+                    " meters.\n\n" +
+                    "Kya aap continue karna chahte ho?"
+                );
 
 
-        const response =
-            await fetch(
+            if (!continueAnyway) {
 
-                ATTENDANCE_API_URL,
-
-                {
-
-                    method: "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body: JSON.stringify({
-
-                        action:
-                            "markAttendance",
-
-                        employeeId:
-                            loggedEmployee.employeeId,
-
-                        email:
-                            loggedEmployee.email,
-
-                        attendanceType:
-                            selectedAttendanceType,
-
-                        latitude:
-                            gps.latitude,
-
-                        longitude:
-                            gps.longitude,
-
-                        accuracy:
-                            gps.accuracy,
-
-                        faceEmbedding:
-                            currentEmbedding,
-
-                        faceImage:
-                            capturedFaceImage
-
-                    })
-
-                }
-
-            );
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Backend HTTP error: " +
-                response.status
-            );
-
+                throw new Error(
+                    "Attendance cancelled because GPS accuracy low thi."
+                );
+            }
         }
 
 
+        // =================================================
+        // BACKEND ATTENDANCE
+        // =================================================
+
+        setStatus(
+            "Verifying face and location..."
+        );
+
+
         const result =
-            await response.json();
+            await callBackend({
+
+                action:
+                    "markAttendance",
+
+                employeeId:
+                    loggedEmployee.employeeId,
+
+                email:
+                    loggedEmployee.email,
+
+                attendanceType:
+                    selectedAttendanceType,
+
+                latitude:
+                    gps.latitude,
+
+                longitude:
+                    gps.longitude,
+
+                accuracy:
+                    gps.accuracy,
+
+                faceEmbedding:
+                    currentEmbedding,
+
+                faceImage:
+                    capturedFaceImage
+
+            });
 
 
         console.log(
@@ -1266,7 +1938,14 @@ async function markAttendance() {
         );
 
 
-        if (result.success) {
+        // =================================================
+        // SUCCESS
+        // =================================================
+
+        if (
+            result &&
+            result.success
+        ) {
 
             showAttendanceSuccess(
                 result
@@ -1276,55 +1955,76 @@ async function markAttendance() {
             await loadTodayAttendance();
 
 
-            document
-                .getElementById("statusText")
-                .textContent =
-                    "Attendance marked successfully.";
+            setStatus(
+                "✓ Attendance marked successfully."
+            );
+
+
+            // Disable selected option
+
+            if (
+                selectedAttendanceType === "IN"
+            ) {
+
+                getElement(
+                    "inOption"
+                ).classList.add(
+                    "disabled"
+                );
+            }
+
+
+            if (
+                selectedAttendanceType === "OUT"
+            ) {
+
+                getElement(
+                    "outOption"
+                ).classList.add(
+                    "disabled"
+                );
+            }
+
 
         }
-
 
         else {
 
             alert(
-
                 "ATTENDANCE REJECTED\n\n" +
-
                 (
-                    result.message ||
+                    result?.message ||
                     "Attendance could not be marked."
                 )
-
             );
 
 
-            document
-                .getElementById("statusText")
-                .textContent =
-                    "Attendance rejected.";
-
+            setStatus(
+                "Attendance rejected."
+            );
         }
 
     }
 
-
     catch (error) {
 
         console.error(
-            "Attendance Error:",
+            "ATTENDANCE ERROR:",
             error
         );
 
 
         alert(
-
             "ATTENDANCE ERROR\n\n" +
             error.message
+        );
 
+
+        setStatus(
+            "Attendance failed."
         );
 
     }
-
 
     finally {
 
@@ -1334,14 +2034,12 @@ async function markAttendance() {
 
         button.textContent =
             "MARK ATTENDANCE";
-
     }
-
 }
 
 
 // =====================================================
-// SHOW SUCCESS
+// SHOW ATTENDANCE SUCCESS
 // =====================================================
 
 function showAttendanceSuccess(result) {
@@ -1360,60 +2058,75 @@ function showAttendanceSuccess(result) {
         now.toLocaleTimeString(
             "en-IN",
             {
-                hour: "2-digit",
-                minute: "2-digit",
-                second: "2-digit"
+
+                hour:
+                    "2-digit",
+
+                minute:
+                    "2-digit",
+
+                second:
+                    "2-digit"
+
             }
         );
 
 
-    document
-        .getElementById("resultEmployee")
-        .textContent =
-            loggedEmployee.name;
+    getElement(
+        "resultEmployee"
+    ).textContent =
+        loggedEmployee.name || "-";
 
 
-    document
-        .getElementById("resultType")
-        .textContent =
-            result.attendanceType ||
-            selectedAttendanceType;
+    getElement(
+        "resultType"
+    ).textContent =
+        result.attendanceType ||
+        selectedAttendanceType ||
+        "-";
 
 
-    document
-        .getElementById("resultDate")
-        .textContent =
-            result.date ||
-            date;
+    getElement(
+        "resultDate"
+    ).textContent =
+        result.date ||
+        date;
 
 
-    document
-        .getElementById("resultTime")
-        .textContent =
-            result.time ||
-            time;
+    getElement(
+        "resultTime"
+    ).textContent =
+        result.time ||
+        time;
 
 
-    document
-        .getElementById("resultLocation")
-        .textContent =
-            result.locationName ||
-            "-";
+    getElement(
+        "resultLocation"
+    ).textContent =
+        result.locationName ||
+        "-";
 
 
-    document
-        .getElementById("resultDistance")
-        .textContent =
-            result.distance != null
-                ? result.distance + " meters"
-                : "-";
+    getElement(
+        "resultDistance"
+    ).textContent =
+        result.distance != null
+            ? result.distance + " meters"
+            : "-";
 
 
-    document
-        .getElementById("attendanceResult")
-        .style.display =
-            "block";
+    getElement(
+        "attendanceResult"
+    ).style.display =
+        "block";
 
+
+    getElement(
+        "attendanceResult"
+    ).scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+    });
 }
 
 
@@ -1430,48 +2143,26 @@ async function loadTodayAttendance() {
 
     try {
 
-        const response =
-            await fetch(
-
-                ATTENDANCE_API_URL,
-
-                {
-
-                    method: "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body: JSON.stringify({
-
-                        action:
-                            "getTodayAttendance",
-
-                        employeeId:
-                            loggedEmployee.employeeId
-
-                    })
-
-                }
-
-            );
-
-
         const result =
-            await response.json();
+            await callBackend({
+
+                action:
+                    "getTodayAttendance",
+
+                employeeId:
+                    loggedEmployee.employeeId
+
+            });
 
 
         console.log(
-            "TODAY STATUS:",
+            "TODAY ATTENDANCE:",
             result
         );
 
 
         if (
+            result &&
             result.success &&
             result.attendance
         ) {
@@ -1480,36 +2171,28 @@ async function loadTodayAttendance() {
                 result.attendance;
 
 
-            document
-                .getElementById(
-                    "currentStatus"
-                )
-                .style.display =
-                    "block";
+            getElement(
+                "currentStatus"
+            ).style.display =
+                "block";
 
 
-            document
-                .getElementById(
-                    "currentAttendanceStatus"
-                )
-                .textContent =
-                    attendance.status || "-";
+            getElement(
+                "currentAttendanceStatus"
+            ).textContent =
+                attendance.status || "-";
 
 
-            document
-                .getElementById(
-                    "currentInTime"
-                )
-                .textContent =
-                    attendance.inTime || "-";
+            getElement(
+                "currentInTime"
+            ).textContent =
+                attendance.inTime || "-";
 
 
-            document
-                .getElementById(
-                    "currentOutTime"
-                )
-                .textContent =
-                    attendance.outTime || "-";
+            getElement(
+                "currentOutTime"
+            ).textContent =
+                attendance.outTime || "-";
 
 
             // =================================================
@@ -1518,12 +2201,11 @@ async function loadTodayAttendance() {
 
             if (attendance.inTime) {
 
-                document
-                    .getElementById("inOption")
-                    .classList.add(
-                        "disabled"
-                    );
-
+                getElement(
+                    "inOption"
+                ).classList.add(
+                    "disabled"
+                );
             }
 
 
@@ -1533,28 +2215,46 @@ async function loadTodayAttendance() {
 
             if (attendance.outTime) {
 
-                document
-                    .getElementById("outOption")
-                    .classList.add(
-                        "disabled"
-                    );
-
+                getElement(
+                    "outOption"
+                ).classList.add(
+                    "disabled"
+                );
             }
 
+
+            // =================================================
+            // BOTH COMPLETED
+            // =================================================
+
+            if (
+                attendance.inTime &&
+                attendance.outTime
+            ) {
+
+                setStatus(
+                    "Aaj ka IN aur OUT dono complete hain."
+                );
+            }
+        }
+
+        else {
+
+            getElement(
+                "currentStatus"
+            ).style.display =
+                "none";
         }
 
     }
 
-
     catch (error) {
 
         console.error(
-            "Today attendance error:",
+            "TODAY ATTENDANCE ERROR:",
             error
         );
-
     }
-
 }
 
 
@@ -1564,6 +2264,11 @@ async function loadTodayAttendance() {
 
 function stopCamera() {
 
+    console.log(
+        "Stopping camera..."
+    );
+
+
     if (cameraStream) {
 
         cameraStream
@@ -1571,20 +2276,26 @@ function stopCamera() {
             .forEach(
                 function(track) {
 
-                    track.stop();
+                    console.log(
+                        "Stopping track:",
+                        track.kind
+                    );
 
+                    track.stop();
                 }
             );
 
 
         cameraStream =
             null;
-
     }
 
 
     const video =
-        document.getElementById("camera");
+        getElement("camera");
+
+
+    video.pause();
 
 
     video.srcObject =
@@ -1595,34 +2306,34 @@ function stopCamera() {
         "none";
 
 
-    document
-        .getElementById("cameraMessage")
-        .style.display =
-            "block";
+    getElement(
+        "cameraMessage"
+    ).style.display =
+        "block";
 
 
-    document
-        .getElementById("cameraMessage")
-        .textContent =
-            "Camera is stopped";
+    getElement(
+        "cameraMessage"
+    ).textContent =
+        "Camera is stopped";
 
 
-    document
-        .getElementById("startCameraBtn")
-        .disabled =
-            false;
+    getElement(
+        "startCameraBtn"
+    ).disabled =
+        false;
 
 
-    document
-        .getElementById("scanFaceBtn")
-        .disabled =
-            true;
+    getElement(
+        "scanFaceBtn"
+    ).disabled =
+        true;
 
 
-    document
-        .getElementById("stopCameraBtn")
-        .disabled =
-            true;
+    getElement(
+        "stopCameraBtn"
+    ).disabled =
+        true;
 
 
     // =================================================
@@ -1641,23 +2352,53 @@ function stopCamera() {
         null;
 
 
-    document
-        .getElementById("attendanceTypeCard")
-        .style.display =
-            "none";
+    faceScanning =
+        false;
 
 
-    document
-        .getElementById("markAttendanceBtn")
-        .disabled =
-            true;
+    // =================================================
+    // HIDE PHOTO
+    // =================================================
+
+    getElement(
+        "photoSection"
+    ).style.display =
+        "none";
 
 
-    document
-        .getElementById("statusText")
-        .textContent =
-            "Camera stopped.";
+    getElement(
+        "capturedImage"
+    ).src =
+        "";
 
+
+    // =================================================
+    // HIDE IN / OUT
+    // =================================================
+
+    getElement(
+        "attendanceTypeCard"
+    ).style.display =
+        "none";
+
+
+    getElement(
+        "markAttendanceBtn"
+    ).disabled =
+        true;
+
+
+    resetAttendanceSelection();
+
+
+    setFaceStatus(
+        "Camera stopped."
+    );
+
+
+    setStatus(
+        "Camera stopped."
+    );
 }
 
 
@@ -1675,31 +2416,26 @@ window.addEventListener(
                 .getTracks()
                 .forEach(
                     function(track) {
-
                         track.stop();
-
                     }
                 );
-
         }
-
     }
 );
 
 
 // =====================================================
-// OPTIONAL DEBUG FUNCTION
+// OPTIONAL DEBUG
 // =====================================================
 
 function getCapturedFaceEmbedding() {
 
     return currentEmbedding;
-
 }
 
 
 // =====================================================
-// OPTIONAL FACE STATUS
+// OPTIONAL DEBUG
 // =====================================================
 
 function isFaceCaptured() {
@@ -1708,5 +2444,62 @@ function isFaceCaptured() {
         currentEmbedding !== null &&
         currentEmbedding.length === 128
     );
+}
 
+
+// =====================================================
+// CAMERA DEBUG
+// =====================================================
+
+function cameraDebug() {
+
+    console.log(
+        "================ CAMERA DEBUG ================"
+    );
+
+    console.log(
+        "Secure Context:",
+        window.isSecureContext
+    );
+
+    console.log(
+        "HTTPS:",
+        location.protocol
+    );
+
+    console.log(
+        "Hostname:",
+        location.hostname
+    );
+
+    console.log(
+        "MediaDevices:",
+        navigator.mediaDevices
+    );
+
+    console.log(
+        "getUserMedia:",
+        navigator.mediaDevices
+            ? navigator.mediaDevices.getUserMedia
+            : null
+    );
+
+    console.log(
+        "Camera Stream:",
+        cameraStream
+    );
+
+    console.log(
+        "Models Loaded:",
+        modelsLoaded
+    );
+
+    console.log(
+        "Logged Employee:",
+        loggedEmployee
+    );
+
+    console.log(
+        "================================================"
+    );
 }
