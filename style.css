@@ -1,1 +1,152 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
 
+body {
+    font-family: Arial, sans-serif;
+    background: #f4f6f8;
+    min-height: 100vh;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    width: 100%;
+    max-width: 750px;
+    padding: 20px;
+}
+
+.attendance-card {
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.10);
+
+    text-align: center;
+}
+
+h1 {
+    color: #222;
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    color: #777;
+    margin-bottom: 25px;
+}
+
+.camera-container {
+    position: relative;
+
+    width: 100%;
+    height: 420px;
+
+    background: #111;
+
+    border-radius: 12px;
+
+    overflow: hidden;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#camera {
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    display: none;
+}
+
+#cameraMessage {
+    color: white;
+    font-size: 18px;
+}
+
+.button-container {
+    display: flex;
+    justify-content: center;
+
+    gap: 10px;
+
+    margin-top: 20px;
+}
+
+button {
+    border: none;
+
+    padding: 12px 20px;
+
+    border-radius: 8px;
+
+    font-size: 15px;
+
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#startCameraBtn {
+    background: #222;
+    color: white;
+}
+
+#captureBtn {
+    background: #2e7d32;
+    color: white;
+}
+
+#stopCameraBtn {
+    background: #c62828;
+    color: white;
+}
+
+.status-box {
+    margin-top: 20px;
+
+    padding: 12px;
+
+    background: #f1f3f5;
+
+    border-radius: 8px;
+
+    color: #333;
+}
+
+#statusText {
+    margin-left: 5px;
+}
+
+#canvas {
+    display: none;
+}
+
+.photo-section {
+    display: none;
+
+    margin-top: 25px;
+}
+
+.photo-section h2 {
+    margin-bottom: 12px;
+}
+
+#capturedImage {
+    width: 100%;
+    max-width: 500px;
+
+    border-radius: 10px;
+
+    border: 2px solid #ddd;
+}
