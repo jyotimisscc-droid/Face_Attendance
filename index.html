@@ -10,6 +10,10 @@
 
 <title>Face Attendance System</title>
 
+<!-- =====================================================
+     FACE API
+===================================================== -->
+
 <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 
 <style>
@@ -60,6 +64,10 @@ body {
     color: #111827;
 }
 
+/* =====================================================
+   LOGIN
+===================================================== */
+
 .login-row {
     display: flex;
     gap: 10px;
@@ -72,6 +80,10 @@ body {
     border-radius: 7px;
     font-size: 15px;
 }
+
+/* =====================================================
+   BUTTON
+===================================================== */
 
 button {
     border: none;
@@ -106,6 +118,10 @@ button:disabled {
     color: white;
 }
 
+/* =====================================================
+   EMPLOYEE
+===================================================== */
+
 .employee-info {
     display: none;
     background: #eff6ff;
@@ -117,6 +133,10 @@ button:disabled {
 .employee-info p {
     margin: 5px 0;
 }
+
+/* =====================================================
+   CAMERA
+===================================================== */
 
 .camera-container {
     text-align: center;
@@ -150,6 +170,10 @@ button:disabled {
     flex-wrap: wrap;
 }
 
+/* =====================================================
+   FACE STATUS
+===================================================== */
+
 .face-status {
     margin-top: 15px;
     padding: 15px;
@@ -177,6 +201,10 @@ button:disabled {
     color: #1d4ed8;
 }
 
+/* =====================================================
+   PHOTO
+===================================================== */
+
 #photoSection {
     display: none;
     margin-top: 20px;
@@ -190,6 +218,10 @@ button:disabled {
     border-radius: 10px;
     border: 3px solid #16a34a;
 }
+
+/* =====================================================
+   IN OUT
+===================================================== */
 
 #attendanceTypeCard {
     display: none;
@@ -240,6 +272,10 @@ button:disabled {
     pointer-events: none;
 }
 
+/* =====================================================
+   MARK
+===================================================== */
+
 .mark-section {
     text-align: center;
     margin-top: 25px;
@@ -257,6 +293,10 @@ button:disabled {
     text-align: center;
     font-weight: bold;
 }
+
+/* =====================================================
+   RESULT
+===================================================== */
 
 #attendanceResult {
     display: none;
@@ -287,6 +327,10 @@ button:disabled {
     font-weight: bold;
 }
 
+/* =====================================================
+   CURRENT STATUS
+===================================================== */
+
 .current-status {
     display: none;
     margin-top: 20px;
@@ -310,11 +354,19 @@ button:disabled {
     font-weight: bold;
 }
 
+/* =====================================================
+   LOADING
+===================================================== */
+
 #modelStatus {
     margin-top: 10px;
     font-size: 13px;
     color: #6b7280;
 }
+
+/* =====================================================
+   MOBILE
+===================================================== */
 
 @media(max-width: 600px) {
 
@@ -333,6 +385,10 @@ button:disabled {
 </head>
 
 <body>
+
+<!-- =====================================================
+     HEADER
+===================================================== -->
 
 <div class="header">
 
@@ -630,6 +686,7 @@ button:disabled {
 
     <h2>Mark Attendance</h2>
 
+
     <div class="mark-section">
 
         <button
@@ -640,6 +697,7 @@ button:disabled {
         >
             MARK ATTENDANCE
         </button>
+
 
         <div id="statusText">
             Login → Start Camera → Scan Face
@@ -739,6 +797,10 @@ button:disabled {
 
 </div>
 
+
+<!-- =====================================================
+     EXTERNAL JAVASCRIPT
+===================================================== -->
 
 <script src="./script.js"></script>
 
