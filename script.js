@@ -6,21 +6,27 @@
 //
 // LOGIN
 //   ↓
+// CHECK FACE ENROLLMENT
+//   ↓
 // CAMERA
 //   ↓
 // FACE DETECTION
 //   ↓
 // 128 VALUE FACE EMBEDDING
 //   ↓
-// CHECK REGISTERED FACE
-//   ↓
-// NEW FACE → ENROLL FACE → GOOGLE SHEET
-//   ↓
-// REGISTERED FACE → VERIFY
+// NEW EMPLOYEE
+//   → SAVE EMBEDDING TO GOOGLE SHEET
+//
+// REGISTERED EMPLOYEE
+//   → READ SAVED EMBEDDING
+//   → FACE MATCH
+//
 //   ↓
 // IN / OUT
 //   ↓
 // GPS
+//   ↓
+// GEOFENCE
 //   ↓
 // ATTENDANCE
 // =====================================================
@@ -142,7 +148,9 @@ async function loadFaceModels() {
                 "Loading face detection model...";
         }
 
-        console.log("Loading Tiny Face Detector...");
+        console.log(
+            "Loading Tiny Face Detector..."
+        );
 
         await faceapi.nets.tinyFaceDetector.loadFromUri(
             MODEL_URL
@@ -154,7 +162,9 @@ async function loadFaceModels() {
                 "Loading face landmark model...";
         }
 
-        console.log("Loading Face Landmark Model...");
+        console.log(
+            "Loading Face Landmark Model..."
+        );
 
         await faceapi.nets.faceLandmark68TinyNet.loadFromUri(
             MODEL_URL
@@ -166,7 +176,9 @@ async function loadFaceModels() {
                 "Loading face recognition model...";
         }
 
-        console.log("Loading Face Recognition Model...");
+        console.log(
+            "Loading Face Recognition Model..."
+        );
 
         await faceapi.nets.faceRecognitionNet.loadFromUri(
             MODEL_URL
@@ -180,6 +192,7 @@ async function loadFaceModels() {
             status.textContent =
                 "✓ Face recognition system ready.";
         }
+
 
         console.log(
             "===================================="
@@ -213,6 +226,7 @@ async function loadFaceModels() {
             "Face recognition model load nahi hua.\n\n" +
             error.message
         );
+
     }
 
 }
@@ -258,7 +272,11 @@ async function loginEmployee() {
     const input = getElement("employeeEmail");
 
     if (!input) {
-        alert("Email input nahi mila.");
+
+        alert(
+            "Email input nahi mila."
+        );
+
         return;
     }
 
@@ -349,6 +367,27 @@ async function loginEmployee() {
 
 
         // =================================================
+        // IMPORTANT:
+        // SAVE FACE ENROLLMENT STATUS FROM BACKEND
+        // =================================================
+
+        loggedEmployee.faceEnrolled =
+            result.faceEnrolled === true;
+
+        
+        console.log(
+            "FACE ENROLLED:",
+            loggedEmployee.faceEnrolled
+        );
+
+
+        console.log(
+            "FACE ID:",
+            result.faceId
+        );
+
+
+        // =================================================
         // EMPLOYEE INFORMATION
         // =================================================
 
@@ -385,7 +424,7 @@ async function loginEmployee() {
 
 
         // IMPORTANT:
-        // IN/OUT hidden until face verified
+        // IN/OUT HIDDEN UNTIL FACE VERIFIED
 
         getElement("attendanceTypeCard").style.display =
             "none";
@@ -438,16 +477,35 @@ async function loginEmployee() {
         await loadTodayAttendance();
 
 
-        setStatus(
-            "Login successful. Start camera and scan face."
-        );
+        // =================================================
+        // FACE ENROLLMENT MESSAGE
+        // =================================================
 
+        if (loggedEmployee.faceEnrolled) {
 
-        setFaceStatus(
-            modelsLoaded
-                ? "Face scan not completed."
-                : "Face model loading..."
-        );
+            setStatus(
+                "Login successful. Registered face found. Start camera and scan face."
+            );
+
+            setFaceStatus(
+                "Registered face found. Camera start karke face verify karo.",
+                "processing"
+            );
+
+        }
+
+        else {
+
+            setStatus(
+                "New employee. Camera start karke face scan karo. Face automatically save hoga."
+            );
+
+            setFaceStatus(
+                "⚠ No face enrolled. First scan par face embedding Google Sheet mein save hogi.",
+                "processing"
+            );
+
+        }
 
 
         // =================================================
@@ -484,7 +542,6 @@ async function loginEmployee() {
 
         loginBtn.textContent =
             "Login";
-
     }
 
 }
@@ -900,10 +957,23 @@ async function startCamera() {
             false;
 
 
-        setFaceStatus(
-            "✓ Camera ready. Face ko camera ke center mein rakho.",
-            "processing"
-        );
+        if (loggedEmployee.faceEnrolled) {
+
+            setFaceStatus(
+                "✓ Camera ready. Registered face verify karne ke liye Scan Face dabao.",
+                "processing"
+            );
+
+        }
+
+        else {
+
+            setFaceStatus(
+                "✓ Camera ready. New face enrollment ke liye Scan Face dabao.",
+                "processing"
+            );
+
+        }
 
 
         setStatus(
@@ -956,6 +1026,7 @@ async function startCamera() {
             errorMessage =
                 "Camera permission denied.\n\n" +
                 "Browser address bar ke camera icon par click karke Allow karo.";
+
         }
 
         else if (error.name === "NotFoundError") {
@@ -963,6 +1034,7 @@ async function startCamera() {
             errorMessage =
                 "Camera device nahi mila.\n\n" +
                 "Laptop/PC camera connected hai ya nahi check karo.";
+
         }
 
         else if (error.name === "NotReadableError") {
@@ -970,6 +1042,7 @@ async function startCamera() {
             errorMessage =
                 "Camera kisi doosre application ke use mein hai.\n\n" +
                 "Zoom, Teams, WhatsApp, Camera app etc. close karo.";
+
         }
 
         else if (error.name === "OverconstrainedError") {
@@ -977,6 +1050,7 @@ async function startCamera() {
             errorMessage =
                 "Camera resolution supported nahi hai.\n\n" +
                 "Basic camera settings ke saath dobara try karo.";
+
         }
 
         else if (error.name === "SecurityError") {
@@ -984,6 +1058,7 @@ async function startCamera() {
             errorMessage =
                 "Browser security ne camera block kiya hai.\n\n" +
                 "App ko HTTPS/GitHub Pages par open karo.";
+
         }
 
         else {
@@ -1020,27 +1095,117 @@ async function startCamera() {
 
 
 // =====================================================
-// ENROLL NEW FACE
+// NORMALIZE CLIENT EMBEDDING
+// =====================================================
 //
-// IMPORTANT:
-// Ye function 128-value embedding ko Apps Script
-// ke enrollFace action par bhejta hai.
-// Backend isko Face_Embeddings sheet mein save karega.
+// face-api descriptor normally Float32Array hota hai.
+// Google Apps Script ko normal JSON Array bhejna hai.
+//
+// EXACTLY 128 numeric values.
 // =====================================================
 
-async function enrollNewFace() {
+function normalizeClientEmbedding(descriptor) {
+
+    if (!descriptor) {
+
+        throw new Error(
+            "Face descriptor missing."
+        );
+    }
+
+
+    let embedding;
+
+
+    try {
+
+        embedding =
+            Array.from(descriptor);
+
+    }
+
+    catch (error) {
+
+        throw new Error(
+            "Face descriptor ko Array mein convert nahi kar pa rahe."
+        );
+    }
+
+
+    if (!Array.isArray(embedding)) {
+
+        throw new Error(
+            "Face embedding Array nahi hai."
+        );
+    }
+
+
+    if (embedding.length !== 128) {
+
+        throw new Error(
+            "Invalid face embedding length: " +
+            embedding.length +
+            ". Expected exactly 128 values."
+        );
+    }
+
+
+    for (
+        let i = 0;
+        i < embedding.length;
+        i++
+    ) {
+
+        const value =
+            Number(embedding[i]);
+
+
+        if (!Number.isFinite(value)) {
+
+            throw new Error(
+                "Face embedding mein invalid numeric value at index " +
+                i
+            );
+        }
+
+
+        embedding[i] =
+            value;
+    }
+
+
+    return embedding;
+}
+
+
+// =====================================================
+// ENROLL NEW FACE
+// =====================================================
+//
+// NEW FACE:
+//
+// Browser
+//   ↓
+// 128 embedding
+//   ↓
+// Apps Script
+//   ↓
+// Face_Embeddings sheet
+//
+// =====================================================
+
+async function enrollFaceToBackend() {
 
     if (!loggedEmployee) {
 
         throw new Error(
-            "Employee login data missing hai."
+            "Employee login missing."
         );
     }
 
 
     if (
         !currentEmbedding ||
-        !Array.isArray(currentEmbedding) ||
         currentEmbedding.length !== 128
     ) {
 
@@ -1050,12 +1215,23 @@ async function enrollNewFace() {
     }
 
 
+    setFaceStatus(
+        "New face detected. Embedding Google Sheet mein save ho rahi hai...",
+        "processing"
+    );
+
+
+    setStatus(
+        "Saving new face embedding..."
+    );
+
+
     console.log(
         "===================================="
     );
 
     console.log(
-        "ENROLLING NEW FACE"
+        "NEW FACE ENROLLMENT STARTED"
     );
 
     console.log(
@@ -1069,13 +1245,13 @@ async function enrollNewFace() {
     );
 
     console.log(
-        "Embedding Length:",
+        "Embedding length:",
         currentEmbedding.length
     );
 
     console.log(
-        "Embedding:",
-        currentEmbedding
+        "First 5 values:",
+        currentEmbedding.slice(0, 5)
     );
 
     console.log(
@@ -1083,21 +1259,11 @@ async function enrollNewFace() {
     );
 
 
-    setFaceStatus(
-        "New face detected. Face embedding Google Sheet mein save ho rahi hai...",
-        "processing"
-    );
-
-
-    setStatus(
-        "Registering face..."
-    );
-
-
     const result =
         await callBackend({
 
-            action: "enrollFace",
+            action:
+                "enrollFace",
 
             employeeId:
                 loggedEmployee.employeeId,
@@ -1111,7 +1277,7 @@ async function enrollNewFace() {
             department:
                 loggedEmployee.department,
 
-            embedding:
+            faceEmbedding:
                 currentEmbedding,
 
             faceImage:
@@ -1121,7 +1287,7 @@ async function enrollNewFace() {
 
 
     console.log(
-        "ENROLL FACE RESPONSE:",
+        "FACE ENROLLMENT RESPONSE:",
         result
     );
 
@@ -1139,23 +1305,198 @@ async function enrollNewFace() {
 
 
     // =================================================
-    // CONFIRM EMBEDDING
+    // IMPORTANT:
+    // MARK LOCAL EMPLOYEE AS ENROLLED
     // =================================================
 
-    if (
-        result.embeddingLength != null &&
-        Number(result.embeddingLength) !== 128
-    ) {
+    loggedEmployee.faceEnrolled =
+        true;
+
+
+    faceVerified =
+        true;
+
+
+    console.log(
+        "FACE SAVED SUCCESSFULLY"
+    );
+
+    console.log(
+        "Face ID:",
+        result.faceId
+    );
+
+    console.log(
+        "Employee ID:",
+        result.employeeId
+    );
+
+    console.log(
+        "Embedding length:",
+        result.embeddingLength
+    );
+
+
+    setFaceStatus(
+        "✓ New face registered successfully. Embedding Face_Embeddings sheet mein save ho gayi.",
+        "success"
+    );
+
+
+    setStatus(
+        "New face registered. Ab IN ya OUT select karo."
+    );
+
+
+    return result;
+}
+
+
+// =====================================================
+// VERIFY EXISTING FACE
+// =====================================================
+//
+// IMPORTANT:
+// Backend expects:
+//
+// data.faceEmbedding
+//
+// NOT:
+//
+// data.embedding
+//
+// =====================================================
+
+async function verifyFaceWithBackend() {
+
+    if (!loggedEmployee) {
 
         throw new Error(
-            "Backend ne invalid embedding length return kiya: " +
-            result.embeddingLength
+            "Employee login missing."
         );
     }
 
 
+    if (
+        !currentEmbedding ||
+        currentEmbedding.length !== 128
+    ) {
+
+        throw new Error(
+            "Valid 128-value face embedding available nahi hai."
+        );
+    }
+
+
+    setFaceStatus(
+        "Registered face ke saath embedding match ho rahi hai...",
+        "processing"
+    );
+
+
+    setStatus(
+        "Checking registered face..."
+    );
+
+
     console.log(
-        "NEW FACE ENROLLMENT SUCCESSFUL"
+        "===================================="
+    );
+
+    console.log(
+        "FACE VERIFICATION STARTED"
+    );
+
+    console.log(
+        "Employee ID:",
+        loggedEmployee.employeeId
+    );
+
+    console.log(
+        "Embedding length:",
+        currentEmbedding.length
+    );
+
+    console.log(
+        "First 5 values:",
+        currentEmbedding.slice(0, 5)
+    );
+
+    console.log(
+        "===================================="
+    );
+
+
+    const result =
+        await callBackend({
+
+            action:
+                "verifyFace",
+
+            employeeId:
+                loggedEmployee.employeeId,
+
+            email:
+                loggedEmployee.email,
+
+            faceEmbedding:
+                currentEmbedding,
+
+            faceImage:
+                capturedFaceImage
+
+        });
+
+
+    console.log(
+        "FACE VERIFY RESPONSE:",
+        result
+    );
+
+
+    if (
+        !result ||
+        !result.success
+    ) {
+
+        faceVerified =
+            false;
+
+        throw new Error(
+            result?.message ||
+            "Face verification failed."
+        );
+    }
+
+
+    faceVerified =
+        true;
+
+
+    console.log(
+        "FACE MATCH SUCCESS"
+    );
+
+
+    if (
+        result.distance !== undefined
+    ) {
+
+        console.log(
+            "FACE DISTANCE:",
+            result.distance
+        );
+    }
+
+
+    setFaceStatus(
+        "✓ Face verified successfully.",
+        "success"
+    );
+
+
+    setStatus(
+        "Face verified. Ab IN ya OUT select karo."
     );
 
 
@@ -1214,7 +1555,7 @@ async function scanFace() {
 
 
         setFaceStatus(
-            "Face detect aur embedding generate ho rahi hai...",
+            "Face detect aur 128-value embedding generate ho rahi hai...",
             "processing"
         );
 
@@ -1344,72 +1685,39 @@ async function scanFace() {
         // =================================================
 
         currentEmbedding =
-            Array.from(
+            normalizeClientEmbedding(
                 detection.descriptor
             );
 
 
         console.log(
+            "===================================="
+        );
+
+        console.log(
             "FACE EMBEDDING GENERATED"
         );
 
+        console.log(
+            "EMBEDDING TYPE:",
+            Array.isArray(currentEmbedding)
+                ? "Array"
+                : typeof currentEmbedding
+        );
 
         console.log(
             "EMBEDDING LENGTH:",
             currentEmbedding.length
         );
 
-
         console.log(
-            "FACE EMBEDDING ARRAY:",
-            currentEmbedding
+            "FIRST 10 VALUES:",
+            currentEmbedding.slice(0, 10)
         );
 
-
-        // =================================================
-        // EXACT 128 CHECK
-        // =================================================
-
-        if (
-            currentEmbedding.length !== 128
-        ) {
-
-            currentEmbedding =
-                null;
-
-            throw new Error(
-                "Invalid face embedding.\n\n" +
-                "128 values expected."
-            );
-        }
-
-
-        // =================================================
-        // CHECK EMBEDDING VALUES
-        // =================================================
-
-        const invalidEmbeddingValue =
-            currentEmbedding.some(
-                function(value) {
-
-                    return (
-                        typeof value !== "number" ||
-                        !Number.isFinite(value)
-                    );
-
-                }
-            );
-
-
-        if (invalidEmbeddingValue) {
-
-            currentEmbedding =
-                null;
-
-            throw new Error(
-                "Embedding mein invalid numeric value mili."
-            );
-        }
+        console.log(
+            "===================================="
+        );
 
 
         // =================================================
@@ -1465,156 +1773,51 @@ async function scanFace() {
 
 
         // =================================================
-        // STEP 1:
-        // REGISTERED FACE VERIFICATION
+        // NEW FACE vs EXISTING FACE
         // =================================================
-
-        setFaceStatus(
-            "128-value face embedding generated. Registered face check ho raha hai...",
-            "processing"
-        );
-
-
-        setStatus(
-            "Checking registered face..."
-        );
-
-
-        const result =
-            await callBackend({
-
-                action:
-                    "verifyFace",
-
-                employeeId:
-                    loggedEmployee.employeeId,
-
-                email:
-                    loggedEmployee.email,
-
-                name:
-                    loggedEmployee.name,
-
-                department:
-                    loggedEmployee.department,
-
-                embedding:
-                    currentEmbedding,
-
-                faceImage:
-                    capturedFaceImage
-
-            });
-
 
         console.log(
-            "FACE VERIFY RESPONSE:",
-            result
+            "FACE ENROLLMENT STATE:",
+            loggedEmployee.faceEnrolled
         );
 
 
         // =================================================
-        // NEW FACE
-        //
-        // Backend agar batata hai ki employee ke liye
-        // koi face registered nahi hai, to enrollFace
-        // call hoga.
+        // NEW EMPLOYEE
         // =================================================
 
         if (
-            result &&
-            (
-                result.isNewFace === true ||
-                result.faceRegistered === false ||
-                result.registered === false ||
-                result.code === "FACE_NOT_REGISTERED"
-            )
+            loggedEmployee.faceEnrolled !== true
         ) {
 
             console.log(
-                "NO REGISTERED FACE FOUND."
+                "NO REGISTERED FACE FOUND"
             );
-
-            setFaceStatus(
-                "Is employee ka face abhi registered nahi hai. New face save kiya ja raha hai...",
-                "processing"
-            );
-
-
-            setStatus(
-                "Registering new face..."
-            );
-
-
-            // =================================================
-            // ENROLL FACE
-            // =================================================
-
-            const enrollResult =
-                await enrollNewFace();
-
 
             console.log(
-                "ENROLL RESULT:",
-                enrollResult
+                "STARTING ENROLLMENT..."
             );
 
 
-            faceVerified =
-                true;
+            await enrollFaceToBackend();
 
 
-            setFaceStatus(
-                "✓ New face registered successfully. Google Sheet mein embedding save ho gayi.",
-                "success"
-            );
-
-
-            setStatus(
-                "New face registered. Ab IN ya OUT select karo."
-            );
-
-        }
-
-
-        // =================================================
-        // FACE REJECTED
-        // =================================================
-
-        else if (
-            !result ||
-            !result.success
-        ) {
-
-            faceVerified =
-                false;
-
-            currentEmbedding =
-                null;
-
-
-            setFaceStatus(
-                result?.message ||
-                "Face verification failed.",
-                "error"
-            );
-
+            // =================================================
+            // SHOW IN / OUT
+            // =================================================
 
             getElement(
                 "attendanceTypeCard"
             ).style.display =
-                "none";
+                "block";
 
 
             getElement(
-                "markAttendanceBtn"
-            ).disabled =
-                true;
-
-
-            setStatus(
-                "Face verification failed."
-            );
+                "attendanceTypeCard"
+            ).scrollIntoView({
+                behavior: "smooth",
+                block: "center"
+            });
 
 
             return;
@@ -1622,30 +1825,19 @@ async function scanFace() {
 
 
         // =================================================
-        // EXISTING FACE VERIFIED
+        // EXISTING EMPLOYEE
         // =================================================
 
-        else {
+        console.log(
+            "REGISTERED FACE FOUND"
+        );
 
-            faceVerified =
-                true;
-
-
-            setFaceStatus(
-                "✓ Face verified successfully.",
-                "success"
-            );
+        console.log(
+            "STARTING FACE MATCH..."
+        );
 
 
-            console.log(
-                "EXISTING FACE MATCH CONFIRMED"
-            );
-
-
-            setStatus(
-                "Face verified. Ab IN ya OUT select karo."
-            );
-        }
+        await verifyFaceWithBackend();
 
 
         // =================================================
@@ -1656,6 +1848,11 @@ async function scanFace() {
             "attendanceTypeCard"
         ).style.display =
             "block";
+
+
+        setStatus(
+            "Face verified. Ab IN ya OUT select karo."
+        );
 
 
         // =================================================
@@ -1669,8 +1866,8 @@ async function scanFace() {
             block: "center"
         });
 
-    }
 
+    }
 
     catch (error) {
 
@@ -1684,8 +1881,31 @@ async function scanFace() {
             false;
 
 
-        currentEmbedding =
-            null;
+        // IMPORTANT:
+        // Embedding ko sirf failed verification
+        // par clear karna hai.
+
+        if (
+            error.message &&
+            (
+                error.message.includes(
+                    "verification"
+                ) ||
+                error.message.includes(
+                    "match"
+                ) ||
+                error.message.includes(
+                    "enrollment"
+                ) ||
+                error.message.includes(
+                    "registered"
+                )
+            )
+        ) {
+
+            currentEmbedding =
+                null;
+        }
 
 
         setFaceStatus(
@@ -1712,7 +1932,6 @@ async function scanFace() {
         );
 
     }
-
 
     finally {
 
@@ -1776,7 +1995,9 @@ function resetAttendanceSelection() {
 
     radios.forEach(
         function(radio) {
+
             radio.checked = false;
+
         }
     );
 
@@ -2240,7 +2461,6 @@ async function markAttendance() {
 
     }
 
-
     catch (error) {
 
         console.error(
@@ -2260,7 +2480,6 @@ async function markAttendance() {
         );
 
     }
-
 
     finally {
 
@@ -2472,6 +2691,7 @@ async function loadTodayAttendance() {
                     "Aaj ka IN aur OUT dono complete hain."
                 );
             }
+
         }
 
         else {
@@ -2651,7 +2871,9 @@ window.addEventListener(
                 .getTracks()
                 .forEach(
                     function(track) {
+
                         track.stop();
+
                     }
                 );
         }
@@ -2692,25 +2914,30 @@ function cameraDebug() {
         "================ CAMERA DEBUG ================"
     );
 
+
     console.log(
         "Secure Context:",
         window.isSecureContext
     );
+
 
     console.log(
         "HTTPS:",
         location.protocol
     );
 
+
     console.log(
         "Hostname:",
         location.hostname
     );
 
+
     console.log(
         "MediaDevices:",
         navigator.mediaDevices
     );
+
 
     console.log(
         "getUserMedia:",
@@ -2719,37 +2946,52 @@ function cameraDebug() {
             : null
     );
 
+
     console.log(
         "Camera Stream:",
         cameraStream
     );
+
 
     console.log(
         "Models Loaded:",
         modelsLoaded
     );
 
+
     console.log(
         "Logged Employee:",
         loggedEmployee
     );
+
+
+    console.log(
+        "Face Enrolled:",
+        loggedEmployee
+            ? loggedEmployee.faceEnrolled
+            : null
+    );
+
 
     console.log(
         "Current Embedding:",
         currentEmbedding
     );
 
+
     console.log(
         "Embedding Length:",
         currentEmbedding
             ? currentEmbedding.length
-            : 0
+            : null
     );
+
 
     console.log(
         "Face Verified:",
         faceVerified
     );
+
 
     console.log(
         "================================================"
