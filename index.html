@@ -1,1 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
 
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Face Attendance System</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="attendance-card">
+
+            <h1>Face Attendance System</h1>
+
+            <p class="subtitle">
+                Camera & Attendance
+            </p>
+
+
+            <!-- CAMERA AREA -->
+            <div class="camera-container">
+
+                <video
+                    id="camera"
+                    autoplay
+                    playsinline>
+                </video>
+
+                <div id="cameraMessage">
+                    Camera is not started
+                </div>
+
+            </div>
+
+
+            <!-- BUTTONS -->
+            <div class="button-container">
+
+                <button
+                    id="startCameraBtn"
+                    onclick="startCamera()">
+                    Start Camera
+                </button>
+
+                <button
+                    id="captureBtn"
+                    onclick="capturePhoto()"
+                    disabled>
+                    Capture
+                </button>
+
+                <button
+                    id="stopCameraBtn"
+                    onclick="stopCamera()"
+                    disabled>
+                    Stop Camera
+                </button>
+
+            </div>
+
+
+            <!-- STATUS -->
+            <div class="status-box">
+
+                <strong>Status:</strong>
+
+                <span id="statusText">
+                    Waiting for camera...
+                </span>
+
+            </div>
+
+
+            <!-- HIDDEN CANVAS -->
+            <canvas id="canvas"></canvas>
+
+
+            <!-- CAPTURED PHOTO -->
+            <div
+                id="photoSection"
+                class="photo-section">
+
+                <h2>Captured Photo</h2>
+
+                <img
+                    id="capturedImage"
+                    alt="Captured Face">
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
