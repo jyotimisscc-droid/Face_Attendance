@@ -1,6 +1,7 @@
 // =====================================================
 // FACE ATTENDANCE SYSTEM
-// CAMERA + FACE EMBEDDING + GPS + APPS SCRIPT
+// CAMERA + FACE EMBEDDING + FACE REGISTRATION
+// FACE VERIFICATION + GPS + ATTENDANCE
 // =====================================================
 
 
@@ -8,45 +9,19 @@
 // GLOBAL VARIABLES
 // =====================================================
 
+let loggedEmployee = null;
+
+let selectedAttendanceType = null;
+
 let cameraStream = null;
 
-let faceModelsLoaded = false;
+let capturedFaceImage = null;
 
-let capturedFaceEmbedding = null;
+let currentEmbedding = null;
 
-let capturedImageData = null;
+let faceVerified = false;
 
-
-// =====================================================
-// DOM ELEMENTS
-// =====================================================
-
-const video =
-    document.getElementById("camera");
-
-const canvas =
-    document.getElementById("canvas");
-
-const startCameraBtn =
-    document.getElementById("startCameraBtn");
-
-const captureBtn =
-    document.getElementById("captureBtn");
-
-const stopCameraBtn =
-    document.getElementById("stopCameraBtn");
-
-const cameraMessage =
-    document.getElementById("cameraMessage");
-
-const statusText =
-    document.getElementById("statusText");
-
-const capturedImage =
-    document.getElementById("capturedImage");
-
-const photoSection =
-    document.getElementById("photoSection");
+let modelsLoaded = false;
 
 
 // =====================================================
@@ -60,22 +35,9 @@ const ATTENDANCE_API_URL =
 // =====================================================
 // FACE MODEL URL
 // =====================================================
-//
-// face-api.js ke models is folder structure mein
-// available hone chahiye:
-//
-// /models/
-//    tiny_face_detector_model-weights_manifest.json
-//    tiny_face_detector_model-shard1
-//    face_landmark_68_model-weights_manifest.json
-//    face_landmark_68_model-shard1
-//    face_recognition_model-weights_manifest.json
-//    face_recognition_model-shard1
-//
-// =====================================================
 
-const FACE_MODEL_URL =
-    "./models";
+const MODEL_URL =
+    "https://cdn.jsdelivr.net/gh/vladmandic/face-api/model/";
 
 
 // =====================================================
@@ -84,72 +46,73 @@ const FACE_MODEL_URL =
 
 async function loadFaceModels() {
 
+    const status =
+        document.getElementById("modelStatus");
+
     try {
 
-        statusText.textContent =
-            "Loading face recognition models...";
+        status.textContent =
+            "Loading face detection model...";
 
-        console.log(
-            "Loading face recognition models..."
-        );
-
-
-        // ---------------------------------------------
-        // Tiny Face Detector
-        // ---------------------------------------------
 
         await faceapi.nets.tinyFaceDetector.loadFromUri(
-            FACE_MODEL_URL
+            MODEL_URL
         );
 
 
-        // ---------------------------------------------
-        // Face Landmark Model
-        // ---------------------------------------------
+        status.textContent =
+            "Loading face landmark model...";
 
-        await faceapi.nets.faceLandmark68Net.loadFromUri(
-            FACE_MODEL_URL
+
+        await faceapi.nets.faceLandmark68TinyNet.loadFromUri(
+            MODEL_URL
         );
 
 
-        // ---------------------------------------------
-        // Face Recognition Model
-        // ---------------------------------------------
+        status.textContent =
+            "Loading face recognition model...";
+
 
         await faceapi.nets.faceRecognitionNet.loadFromUri(
-            FACE_MODEL_URL
+            MODEL_URL
         );
 
 
-        faceModelsLoaded = true;
+        modelsLoaded = true;
+
+
+        status.textContent =
+            "Face recognition system ready.";
 
 
         console.log(
-            "Face recognition models loaded successfully."
+            "FACE MODELS LOADED"
         );
 
+    }
 
-        statusText.textContent =
-            "Face recognition ready";
-
-
-    } catch (error) {
+    catch (error) {
 
         console.error(
-            "Face Model Error:",
+            "MODEL LOAD ERROR:",
             error
         );
 
-        faceModelsLoaded = false;
 
-        statusText.textContent =
-            "Face model loading failed";
+        modelsLoaded = false;
+
+
+        status.textContent =
+            "Face model loading failed.";
+
 
         alert(
-            "Face recognition model load nahi ho paya.\n\n" +
-            "Check karo ki models folder sahi location par hai."
+            "Face recognition model load nahi hua.\n\n" +
+            error.message
         );
+
     }
+
 }
 
 
@@ -159,16 +122,228 @@ async function loadFaceModels() {
 
 window.addEventListener(
     "DOMContentLoaded",
-    async function () {
+    function() {
 
-        console.log(
-            "Face Attendance System Started"
-        );
-
-        await loadFaceModels();
+        loadFaceModels();
 
     }
 );
+
+
+// =====================================================
+// LOGIN EMPLOYEE
+// =====================================================
+
+async function loginEmployee() {
+
+    const email =
+        document
+            .getElementById("employeeEmail")
+            .value
+            .trim()
+            .toLowerCase();
+
+
+    if (!email) {
+
+        alert(
+            "Company email enter karo."
+        );
+
+        return;
+    }
+
+
+    if (!email.includes("@")) {
+
+        alert(
+            "Valid email enter karo."
+        );
+
+        return;
+    }
+
+
+    const loginBtn =
+        document.getElementById("loginBtn");
+
+
+    loginBtn.disabled = true;
+
+    loginBtn.textContent =
+        "Checking...";
+
+
+    try {
+
+        const response =
+            await fetch(
+                ATTENDANCE_API_URL,
+                {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+                    },
+
+                    body: JSON.stringify({
+
+                        action: "login",
+
+                        email: email
+
+                    })
+
+                }
+            );
+
+
+        const result =
+            await response.json();
+
+
+        console.log(
+            "LOGIN RESPONSE:",
+            result
+        );
+
+
+        if (!result.success) {
+
+            alert(
+                result.message ||
+                "Employee login failed."
+            );
+
+            return;
+        }
+
+
+        loggedEmployee =
+            result.employee;
+
+
+        document
+            .getElementById("employeeName")
+            .textContent =
+                loggedEmployee.name || "-";
+
+
+        document
+            .getElementById("employeeId")
+            .textContent =
+                loggedEmployee.employeeId || "-";
+
+
+        document
+            .getElementById("employeeDepartment")
+            .textContent =
+                loggedEmployee.department || "-";
+
+
+        document
+            .getElementById("loggedEmail")
+            .textContent =
+                loggedEmployee.email || email;
+
+
+        document
+            .getElementById("employeeInfo")
+            .style.display =
+                "block";
+
+
+        document
+            .getElementById("cameraCard")
+            .style.display =
+                "block";
+
+
+        document
+            .getElementById("markCard")
+            .style.display =
+                "block";
+
+
+        document
+            .getElementById("attendanceTypeCard")
+            .style.display =
+                "none";
+
+
+        document
+            .getElementById("markAttendanceBtn")
+            .disabled =
+                true;
+
+
+        faceVerified = false;
+
+        selectedAttendanceType = null;
+
+        capturedFaceImage = null;
+
+        currentEmbedding = null;
+
+
+        // Reset IN / OUT state
+
+        document
+            .getElementById("inOption")
+            .classList.remove("selected-in");
+
+        document
+            .getElementById("outOption")
+            .classList.remove("selected-out");
+
+        document
+            .getElementById("inOption")
+            .classList.remove("disabled");
+
+        document
+            .getElementById("outOption")
+            .classList.remove("disabled");
+
+
+        await loadTodayAttendance();
+
+
+        document
+            .getElementById("statusText")
+            .textContent =
+                "Login successful. Start camera and scan face.";
+
+    }
+
+
+    catch (error) {
+
+        console.error(
+            "Login Error:",
+            error
+        );
+
+
+        alert(
+            "Login error:\n\n" +
+            error.message
+        );
+
+    }
+
+
+    finally {
+
+        loginBtn.disabled = false;
+
+        loginBtn.textContent =
+            "Login";
+
+    }
+
+}
 
 
 // =====================================================
@@ -177,89 +352,109 @@ window.addEventListener(
 
 async function startCamera() {
 
+    if (!modelsLoaded) {
+
+        alert(
+            "Face recognition model abhi load ho raha hai. Thoda wait karo."
+        );
+
+        return;
+    }
+
+
+    if (!loggedEmployee) {
+
+        alert(
+            "Pehle employee login karo."
+        );
+
+        return;
+    }
+
+
     try {
 
-        // ---------------------------------------------
-        // Check Face Models
-        // ---------------------------------------------
-
-        if (!faceModelsLoaded) {
-
-            alert(
-                "Face recognition system abhi ready nahi hai.\n\n" +
-                "Pehle face models load hone do."
-            );
-
-            return;
-        }
-
-
-        // ---------------------------------------------
-        // Camera Permission
-        // ---------------------------------------------
-
-        statusText.textContent =
-            "Requesting camera permission...";
-
-
         cameraStream =
-            await navigator.mediaDevices.getUserMedia({
+            await navigator
+                .mediaDevices
+                .getUserMedia({
 
-                video: {
+                    video: {
 
-                    facingMode: "user",
+                        facingMode: "user",
 
-                    width: {
-                        ideal: 1280
+                        width: {
+                            ideal: 1280
+                        },
+
+                        height: {
+                            ideal: 720
+                        }
+
                     },
 
-                    height: {
-                        ideal: 720
-                    }
-                },
+                    audio: false
 
-                audio: false
-            });
+                });
 
 
-        // ---------------------------------------------
-        // Attach Camera
-        // ---------------------------------------------
+        const video =
+            document.getElementById("camera");
+
 
         video.srcObject =
             cameraStream;
 
+
         video.style.display =
             "block";
 
-        cameraMessage.style.display =
-            "none";
+
+        document
+            .getElementById("cameraMessage")
+            .style.display =
+                "none";
 
 
-        // ---------------------------------------------
-        // Button State
-        // ---------------------------------------------
-
-        startCameraBtn.disabled =
-            true;
-
-        captureBtn.disabled =
-            false;
-
-        stopCameraBtn.disabled =
-            false;
+        document
+            .getElementById("startCameraBtn")
+            .disabled =
+                true;
 
 
-        statusText.textContent =
-            "Camera is running";
+        document
+            .getElementById("scanFaceBtn")
+            .disabled =
+                false;
 
 
-        console.log(
-            "Camera started successfully."
-        );
+        document
+            .getElementById("stopCameraBtn")
+            .disabled =
+                false;
 
 
-    } catch (error) {
+        document
+            .getElementById("faceStatus")
+            .className =
+                "face-status face-processing";
+
+
+        document
+            .getElementById("faceStatus")
+            .textContent =
+                "Camera ready. Face ko camera ke center mein rakho.";
+
+
+        document
+            .getElementById("statusText")
+            .textContent =
+                "Camera running. Scan Face dabao.";
+
+    }
+
+
+    catch (error) {
 
         console.error(
             "Camera Error:",
@@ -267,85 +462,209 @@ async function startCamera() {
         );
 
 
-        statusText.textContent =
-            "Camera access failed";
-
-
         alert(
-            "Camera access nahi mila.\n\n" +
-            "Browser camera permission check karo."
+            "Camera permission nahi mili.\n\n" +
+            error.message
         );
+
     }
+
 }
 
 
 // =====================================================
-// CAPTURE PHOTO + FACE EMBEDDING
+// SCAN FACE
 // =====================================================
 
-async function capturePhoto() {
+async function scanFace() {
+
+    if (!modelsLoaded) {
+
+        alert(
+            "Face model ready nahi hai."
+        );
+
+        return;
+    }
+
+
+    if (!cameraStream) {
+
+        alert(
+            "Camera pehle start karo."
+        );
+
+        return;
+    }
+
+
+    const video =
+        document.getElementById("camera");
+
+
+    const scanButton =
+        document.getElementById("scanFaceBtn");
+
+
+    const faceStatus =
+        document.getElementById("faceStatus");
+
+
+    scanButton.disabled = true;
+
+    scanButton.textContent =
+        "Scanning...";
+
+
+    faceStatus.className =
+        "face-status face-processing";
+
+
+    faceStatus.textContent =
+        "Face detect aur embedding generate ho rahi hai...";
+
 
     try {
 
-        // ---------------------------------------------
-        // Camera Check
-        // ---------------------------------------------
+        // =================================================
+        // 1. CHECK VIDEO READY
+        // =================================================
 
-        if (!cameraStream) {
+        if (
+            video.videoWidth === 0 ||
+            video.videoHeight === 0
+        ) {
 
-            alert(
-                "Camera pehle start karo."
+            throw new Error(
+                "Camera abhi ready nahi hai. 2-3 seconds wait karo."
             );
 
-            return;
         }
 
 
-        // ---------------------------------------------
-        // Face Model Check
-        // ---------------------------------------------
+        // =================================================
+        // 2. DETECT SINGLE FACE
+        // =================================================
 
-        if (!faceModelsLoaded) {
+        const detection =
+            await faceapi
+                .detectSingleFace(
+                    video,
+                    new faceapi.TinyFaceDetectorOptions({
+                        inputSize: 416,
+                        scoreThreshold: 0.5
+                    })
+                )
+                .withFaceLandmarks(true)
+                .withFaceDescriptor();
 
-            alert(
-                "Face recognition model ready nahi hai."
+
+        if (!detection) {
+
+            throw new Error(
+                "Face detect nahi hua. Face camera ke saamne clearly rakho."
             );
 
-            return;
         }
 
 
-        // ---------------------------------------------
-        // Video Dimensions
-        // ---------------------------------------------
+        // =================================================
+        // 3. EXACTLY ONE FACE CHECK
+        // =================================================
+
+        const allFaces =
+            await faceapi
+                .detectAllFaces(
+                    video,
+                    new faceapi.TinyFaceDetectorOptions({
+                        inputSize: 416,
+                        scoreThreshold: 0.5
+                    })
+                );
+
+
+        if (allFaces.length !== 1) {
+
+            throw new Error(
+                "Camera mein exactly 1 face hona chahiye."
+            );
+
+        }
+
+
+        // =================================================
+        // 4. FACE QUALITY CHECK
+        // =================================================
+
+        const box =
+            detection.detection.box;
+
+
+        if (
+            box.width < 100 ||
+            box.height < 100
+        ) {
+
+            throw new Error(
+                "Face bahut door hai. Camera ke paas aao."
+            );
+
+        }
+
+
+        // =================================================
+        // 5. GENERATE FACE EMBEDDING
+        // =================================================
+
+        currentEmbedding =
+            Array.from(
+                detection.descriptor
+            );
+
+
+        console.log(
+            "FACE EMBEDDING GENERATED"
+        );
+
+
+        console.log(
+            "EMBEDDING LENGTH:",
+            currentEmbedding.length
+        );
+
+
+        if (
+            currentEmbedding.length !== 128
+        ) {
+
+            currentEmbedding = null;
+
+            throw new Error(
+                "Invalid face embedding. 128 values expected."
+            );
+
+        }
+
+
+        // =================================================
+        // 6. CAPTURE PHOTO
+        // =================================================
+
+        const canvas =
+            document.getElementById("canvas");
+
 
         const width =
             video.videoWidth;
+
 
         const height =
             video.videoHeight;
 
 
-        if (
-            width === 0 ||
-            height === 0
-        ) {
-
-            alert(
-                "Camera abhi ready nahi hai.\n" +
-                "2-3 seconds wait karke dobara try karo."
-            );
-
-            return;
-        }
-
-
-        // ---------------------------------------------
-        // Capture Frame
-        // ---------------------------------------------
-
         canvas.width =
             width;
+
 
         canvas.height =
             height;
@@ -364,188 +683,878 @@ async function capturePhoto() {
         );
 
 
-        // ---------------------------------------------
-        // Convert Image
-        // ---------------------------------------------
-
-        capturedImageData =
+        capturedFaceImage =
             canvas.toDataURL(
                 "image/jpeg",
-                0.90
+                0.85
             );
 
 
-        capturedImage.src =
-            capturedImageData;
+        document
+            .getElementById("capturedImage")
+            .src =
+                capturedFaceImage;
 
 
-        photoSection.style.display =
-            "block";
+        document
+            .getElementById("photoSection")
+            .style.display =
+                "block";
 
 
-        // ---------------------------------------------
-        // Face Detection
-        // ---------------------------------------------
+        // =================================================
+        // 7. SEND FACE TO BACKEND
+        // =================================================
 
-        statusText.textContent =
-            "Detecting face...";
-
-
-        console.log(
-            "Starting face detection..."
-        );
+        faceStatus.textContent =
+            "Checking registered face...";
 
 
-        const detection =
-            await faceapi
-                .detectSingleFace(
-                    canvas,
-                    new faceapi.TinyFaceDetectorOptions({
-                        inputSize: 416,
-                        scoreThreshold: 0.5
+        const response =
+            await fetch(
+                ATTENDANCE_API_URL,
+                {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+                    },
+
+                    body: JSON.stringify({
+
+                        action:
+                            "verifyFace",
+
+                        employeeId:
+                            loggedEmployee.employeeId,
+
+                        email:
+                            loggedEmployee.email,
+
+                        name:
+                            loggedEmployee.name,
+
+                        department:
+                            loggedEmployee.department,
+
+                        embedding:
+                            currentEmbedding,
+
+                        faceImage:
+                            capturedFaceImage
+
                     })
-                )
-                .withFaceLandmarks()
-                .withFaceDescriptor();
 
-
-        // ---------------------------------------------
-        // No Face Found
-        // ---------------------------------------------
-
-        if (!detection) {
-
-            capturedFaceEmbedding =
-                null;
-
-
-            statusText.textContent =
-                "Face not detected";
-
-
-            alert(
-                "Face detect nahi hua.\n\n" +
-                "Face ko camera ke saamne seedha rakho " +
-                "aur dobara capture karo."
+                }
             );
 
 
-            return;
+        if (!response.ok) {
+
+            throw new Error(
+                "Face verification HTTP error: " +
+                response.status
+            );
+
         }
 
 
-        // ---------------------------------------------
-        // Face Found
-        // ---------------------------------------------
-
-        console.log(
-            "Face detected successfully."
-        );
-
-
-        // ---------------------------------------------
-        // FACE EMBEDDING
-        // ---------------------------------------------
-        //
-        // faceDescriptor = 128 dimensional vector
-        //
-        // Example:
-        //
-        // Float32Array(128)
-        //
-        // Isko Array mein convert kar rahe hain
-        // taaki JSON ke through backend ko bhej saken.
-        // ---------------------------------------------
-
-        capturedFaceEmbedding =
-            Array.from(
-                detection.descriptor
-            );
+        const result =
+            await response.json();
 
 
         console.log(
-            "Face embedding generated."
-        );
-
-        console.log(
-            "Embedding length:",
-            capturedFaceEmbedding.length
+            "FACE VERIFY RESPONSE:",
+            result
         );
 
 
-        // ---------------------------------------------
-        // Validate Embedding
-        // ---------------------------------------------
+        // =================================================
+        // 8. FACE REJECTED
+        // =================================================
 
-        if (
-            capturedFaceEmbedding.length !== 128
-        ) {
+        if (!result.success) {
 
-            capturedFaceEmbedding =
-                null;
+            faceVerified = false;
 
-
-            statusText.textContent =
-                "Invalid face embedding";
+            currentEmbedding = null;
 
 
-            alert(
-                "Face embedding generate nahi hua."
-            );
+            faceStatus.className =
+                "face-status face-error";
+
+
+            faceStatus.textContent =
+                result.message ||
+                "Face verification failed.";
+
+
+            document
+                .getElementById("attendanceTypeCard")
+                .style.display =
+                    "none";
+
+
+            document
+                .getElementById("markAttendanceBtn")
+                .disabled =
+                    true;
 
 
             return;
+
         }
 
 
-        // ---------------------------------------------
-        // Success
-        // ---------------------------------------------
+        // =================================================
+        // 9. NEW FACE REGISTERED
+        // =================================================
 
-        statusText.textContent =
-            "Face verified - embedding generated";
+        if (result.isNewFace === true) {
 
-
-        console.log(
-            "========== FACE EMBEDDING =========="
-        );
-
-        console.log(
-            capturedFaceEmbedding
-        );
-
-        console.log(
-            "===================================="
-        );
+            faceVerified = true;
 
 
-        alert(
-            "Face successfully detected.\n\n" +
-            "Face embedding generated successfully."
-        );
+            faceStatus.className =
+                "face-status face-success";
 
 
-    } catch (error) {
+            faceStatus.textContent =
+                "✓ New face registered successfully.";
+
+
+            console.log(
+                "NEW FACE REGISTRATION CONFIRMED"
+            );
+
+        }
+
+
+        // =================================================
+        // 10. EXISTING FACE VERIFIED
+        // =================================================
+
+        else {
+
+            faceVerified = true;
+
+
+            faceStatus.className =
+                "face-status face-success";
+
+
+            faceStatus.textContent =
+                "✓ Face verified successfully.";
+
+
+            console.log(
+                "EXISTING FACE MATCH CONFIRMED"
+            );
+
+        }
+
+
+        // =================================================
+        // 11. SHOW IN / OUT
+        // =================================================
+
+        document
+            .getElementById("attendanceTypeCard")
+            .style.display =
+                "block";
+
+
+        document
+            .getElementById("statusText")
+            .textContent =
+                "Face verified. Ab IN ya OUT select karo.";
+
+    }
+
+
+    catch (error) {
 
         console.error(
-            "Face Capture Error:",
+            "Face Scan Error:",
             error
         );
 
 
-        capturedFaceEmbedding =
-            null;
+        faceVerified = false;
+
+        currentEmbedding = null;
 
 
-        statusText.textContent =
-            "Face processing failed";
+        faceStatus.className =
+            "face-status face-error";
+
+
+        faceStatus.textContent =
+            error.message ||
+            "Face scan failed.";
+
+
+        document
+            .getElementById("attendanceTypeCard")
+            .style.display =
+                "none";
+
+
+        document
+            .getElementById("markAttendanceBtn")
+            .disabled =
+                true;
+
+    }
+
+
+    finally {
+
+        scanButton.disabled =
+            false;
+
+
+        scanButton.textContent =
+            "Scan Face";
+
+    }
+
+}
+
+
+// =====================================================
+// SELECT IN / OUT
+// =====================================================
+
+function selectAttendanceType(type) {
+
+    if (!faceVerified) {
+
+        alert(
+            "Pehle face verify karo."
+        );
+
+        return;
+    }
+
+
+    selectedAttendanceType =
+        type;
+
+
+    const inOption =
+        document.getElementById("inOption");
+
+
+    const outOption =
+        document.getElementById("outOption");
+
+
+    inOption.classList.remove(
+        "selected-in"
+    );
+
+
+    outOption.classList.remove(
+        "selected-out"
+    );
+
+
+    if (type === "IN") {
+
+        inOption.classList.add(
+            "selected-in"
+        );
+
+
+        document
+            .getElementById("statusText")
+            .textContent =
+                "IN selected. GPS location verify hogi.";
+
+    }
+
+
+    if (type === "OUT") {
+
+        outOption.classList.add(
+            "selected-out"
+        );
+
+
+        document
+            .getElementById("statusText")
+            .textContent =
+                "OUT selected. GPS location verify hogi.";
+
+    }
+
+
+    document
+        .getElementById("markAttendanceBtn")
+        .disabled =
+            false;
+
+}
+
+
+// =====================================================
+// GET REAL GPS
+// =====================================================
+
+function getRealGPS() {
+
+    return new Promise(
+        function(resolve, reject) {
+
+            if (!navigator.geolocation) {
+
+                reject(
+                    new Error(
+                        "GPS not supported."
+                    )
+                );
+
+                return;
+            }
+
+
+            navigator
+                .geolocation
+                .getCurrentPosition(
+
+                    function(position) {
+
+                        resolve({
+
+                            latitude:
+                                position.coords.latitude,
+
+                            longitude:
+                                position.coords.longitude,
+
+                            accuracy:
+                                position.coords.accuracy
+
+                        });
+
+                    },
+
+
+                    function(error) {
+
+                        let message;
+
+
+                        switch (error.code) {
+
+                            case error.PERMISSION_DENIED:
+
+                                message =
+                                    "GPS permission denied.";
+
+                                break;
+
+
+                            case error.POSITION_UNAVAILABLE:
+
+                                message =
+                                    "GPS location unavailable.";
+
+                                break;
+
+
+                            case error.TIMEOUT:
+
+                                message =
+                                    "GPS request timed out.";
+
+                                break;
+
+
+                            default:
+
+                                message =
+                                    "Unable to get GPS location.";
+
+                        }
+
+
+                        reject(
+                            new Error(message)
+                        );
+
+                    },
+
+
+                    {
+
+                        enableHighAccuracy:
+                            true,
+
+                        timeout:
+                            15000,
+
+                        maximumAge:
+                            0
+
+                    }
+
+                );
+
+        }
+    );
+
+}
+
+
+// =====================================================
+// MARK ATTENDANCE
+// =====================================================
+
+async function markAttendance() {
+
+    if (!loggedEmployee) {
+
+        alert(
+            "Pehle employee login karo."
+        );
+
+        return;
+    }
+
+
+    if (!faceVerified) {
+
+        alert(
+            "Face verify nahi hua."
+        );
+
+        return;
+    }
+
+
+    if (!currentEmbedding) {
+
+        alert(
+            "Face embedding missing hai. Dobara scan karo."
+        );
+
+        return;
+    }
+
+
+    if (!selectedAttendanceType) {
+
+        alert(
+            "IN ya OUT select karo."
+        );
+
+        return;
+    }
+
+
+    const button =
+        document.getElementById(
+            "markAttendanceBtn"
+        );
+
+
+    button.disabled = true;
+
+    button.textContent =
+        "VERIFYING...";
+
+
+    try {
+
+        // =================================================
+        // GPS
+        // =================================================
+
+        document
+            .getElementById("statusText")
+            .textContent =
+                "Getting GPS location...";
+
+
+        const gps =
+            await getRealGPS();
+
+
+        // =================================================
+        // BACKEND
+        // =================================================
+
+        document
+            .getElementById("statusText")
+            .textContent =
+                "Verifying face and location...";
+
+
+        const response =
+            await fetch(
+
+                ATTENDANCE_API_URL,
+
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body: JSON.stringify({
+
+                        action:
+                            "markAttendance",
+
+                        employeeId:
+                            loggedEmployee.employeeId,
+
+                        email:
+                            loggedEmployee.email,
+
+                        attendanceType:
+                            selectedAttendanceType,
+
+                        latitude:
+                            gps.latitude,
+
+                        longitude:
+                            gps.longitude,
+
+                        accuracy:
+                            gps.accuracy,
+
+                        faceEmbedding:
+                            currentEmbedding,
+
+                        faceImage:
+                            capturedFaceImage
+
+                    })
+
+                }
+
+            );
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                "Backend HTTP error: " +
+                response.status
+            );
+
+        }
+
+
+        const result =
+            await response.json();
+
+
+        console.log(
+            "ATTENDANCE RESPONSE:",
+            result
+        );
+
+
+        if (result.success) {
+
+            showAttendanceSuccess(
+                result
+            );
+
+
+            await loadTodayAttendance();
+
+
+            document
+                .getElementById("statusText")
+                .textContent =
+                    "Attendance marked successfully.";
+
+        }
+
+
+        else {
+
+            alert(
+
+                "ATTENDANCE REJECTED\n\n" +
+
+                (
+                    result.message ||
+                    "Attendance could not be marked."
+                )
+
+            );
+
+
+            document
+                .getElementById("statusText")
+                .textContent =
+                    "Attendance rejected.";
+
+        }
+
+    }
+
+
+    catch (error) {
+
+        console.error(
+            "Attendance Error:",
+            error
+        );
 
 
         alert(
-            "Face processing mein error aaya.\n\n" +
+
+            "ATTENDANCE ERROR\n\n" +
             error.message
+
         );
+
     }
+
+
+    finally {
+
+        button.disabled =
+            false;
+
+
+        button.textContent =
+            "MARK ATTENDANCE";
+
+    }
+
+}
+
+
+// =====================================================
+// SHOW SUCCESS
+// =====================================================
+
+function showAttendanceSuccess(result) {
+
+    const now =
+        new Date();
+
+
+    const date =
+        now.toLocaleDateString(
+            "en-IN"
+        );
+
+
+    const time =
+        now.toLocaleTimeString(
+            "en-IN",
+            {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit"
+            }
+        );
+
+
+    document
+        .getElementById("resultEmployee")
+        .textContent =
+            loggedEmployee.name;
+
+
+    document
+        .getElementById("resultType")
+        .textContent =
+            result.attendanceType ||
+            selectedAttendanceType;
+
+
+    document
+        .getElementById("resultDate")
+        .textContent =
+            result.date ||
+            date;
+
+
+    document
+        .getElementById("resultTime")
+        .textContent =
+            result.time ||
+            time;
+
+
+    document
+        .getElementById("resultLocation")
+        .textContent =
+            result.locationName ||
+            "-";
+
+
+    document
+        .getElementById("resultDistance")
+        .textContent =
+            result.distance != null
+                ? result.distance + " meters"
+                : "-";
+
+
+    document
+        .getElementById("attendanceResult")
+        .style.display =
+            "block";
+
+}
+
+
+// =====================================================
+// TODAY ATTENDANCE
+// =====================================================
+
+async function loadTodayAttendance() {
+
+    if (!loggedEmployee) {
+        return;
+    }
+
+
+    try {
+
+        const response =
+            await fetch(
+
+                ATTENDANCE_API_URL,
+
+                {
+
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type":
+                            "text/plain;charset=utf-8"
+
+                    },
+
+                    body: JSON.stringify({
+
+                        action:
+                            "getTodayAttendance",
+
+                        employeeId:
+                            loggedEmployee.employeeId
+
+                    })
+
+                }
+
+            );
+
+
+        const result =
+            await response.json();
+
+
+        console.log(
+            "TODAY STATUS:",
+            result
+        );
+
+
+        if (
+            result.success &&
+            result.attendance
+        ) {
+
+            const attendance =
+                result.attendance;
+
+
+            document
+                .getElementById(
+                    "currentStatus"
+                )
+                .style.display =
+                    "block";
+
+
+            document
+                .getElementById(
+                    "currentAttendanceStatus"
+                )
+                .textContent =
+                    attendance.status || "-";
+
+
+            document
+                .getElementById(
+                    "currentInTime"
+                )
+                .textContent =
+                    attendance.inTime || "-";
+
+
+            document
+                .getElementById(
+                    "currentOutTime"
+                )
+                .textContent =
+                    attendance.outTime || "-";
+
+
+            // =================================================
+            // EXISTING IN
+            // =================================================
+
+            if (attendance.inTime) {
+
+                document
+                    .getElementById("inOption")
+                    .classList.add(
+                        "disabled"
+                    );
+
+            }
+
+
+            // =================================================
+            // EXISTING OUT
+            // =================================================
+
+            if (attendance.outTime) {
+
+                document
+                    .getElementById("outOption")
+                    .classList.add(
+                        "disabled"
+                    );
+
+            }
+
+        }
+
+    }
+
+
+    catch (error) {
+
+        console.error(
+            "Today attendance error:",
+            error
+        );
+
+    }
+
 }
 
 
@@ -559,15 +1568,23 @@ function stopCamera() {
 
         cameraStream
             .getTracks()
-            .forEach(function (track) {
+            .forEach(
+                function(track) {
 
-                track.stop();
+                    track.stop();
 
-            });
+                }
+            );
+
 
         cameraStream =
             null;
+
     }
+
+
+    const video =
+        document.getElementById("camera");
 
 
     video.srcObject =
@@ -578,67 +1595,92 @@ function stopCamera() {
         "none";
 
 
-    cameraMessage.style.display =
-        "block";
+    document
+        .getElementById("cameraMessage")
+        .style.display =
+            "block";
 
 
-    cameraMessage.textContent =
-        "Camera is stopped";
+    document
+        .getElementById("cameraMessage")
+        .textContent =
+            "Camera is stopped";
 
 
-    startCameraBtn.disabled =
+    document
+        .getElementById("startCameraBtn")
+        .disabled =
+            false;
+
+
+    document
+        .getElementById("scanFaceBtn")
+        .disabled =
+            true;
+
+
+    document
+        .getElementById("stopCameraBtn")
+        .disabled =
+            true;
+
+
+    // =================================================
+    // CLEAR FACE STATE
+    // =================================================
+
+    faceVerified =
         false;
 
 
-    captureBtn.disabled =
-        true;
-
-
-    stopCameraBtn.disabled =
-        true;
-
-
-    statusText.textContent =
-        "Camera stopped";
-
-
-    // ---------------------------------------------
-    // Clear Captured Face
-    // ---------------------------------------------
-
-    capturedFaceEmbedding =
-        null;
-
-    capturedImageData =
+    currentEmbedding =
         null;
 
 
-    console.log(
-        "Camera stopped."
-    );
+    capturedFaceImage =
+        null;
+
+
+    document
+        .getElementById("attendanceTypeCard")
+        .style.display =
+            "none";
+
+
+    document
+        .getElementById("markAttendanceBtn")
+        .disabled =
+            true;
+
+
+    document
+        .getElementById("statusText")
+        .textContent =
+            "Camera stopped.";
+
 }
 
 
 // =====================================================
-// PAGE CLOSE / REFRESH
+// PAGE CLOSE
 // =====================================================
 
 window.addEventListener(
     "beforeunload",
-    function () {
+    function() {
 
         if (cameraStream) {
 
             cameraStream
                 .getTracks()
-                .forEach(function (track) {
+                .forEach(
+                    function(track) {
 
-                    track.stop();
+                        track.stop();
 
-                });
+                    }
+                );
 
-            cameraStream =
-                null;
         }
 
     }
@@ -646,488 +1688,25 @@ window.addEventListener(
 
 
 // =====================================================
-// REAL BROWSER GPS
-// =====================================================
-
-function getRealGPS() {
-
-    return new Promise(
-        function (resolve, reject) {
-
-            if (!navigator.geolocation) {
-
-                reject(
-                    new Error(
-                        "Geolocation is not supported by this browser."
-                    )
-                );
-
-                return;
-            }
-
-
-            navigator.geolocation.getCurrentPosition(
-
-                function (position) {
-
-                    const latitude =
-                        position.coords.latitude;
-
-                    const longitude =
-                        position.coords.longitude;
-
-                    const accuracy =
-                        position.coords.accuracy;
-
-
-                    console.log(
-                        "========== REAL GPS =========="
-                    );
-
-
-                    console.log(
-                        "Latitude:",
-                        latitude
-                    );
-
-
-                    console.log(
-                        "Longitude:",
-                        longitude
-                    );
-
-
-                    console.log(
-                        "Accuracy:",
-                        accuracy,
-                        "meters"
-                    );
-
-
-                    resolve({
-
-                        latitude:
-                            latitude,
-
-                        longitude:
-                            longitude,
-
-                        accuracy:
-                            accuracy
-
-                    });
-
-                },
-
-
-                function (error) {
-
-                    let message;
-
-
-                    switch (error.code) {
-
-                        case error.PERMISSION_DENIED:
-
-                            message =
-                                "GPS permission denied.";
-
-                            break;
-
-
-                        case error.POSITION_UNAVAILABLE:
-
-                            message =
-                                "GPS location unavailable.";
-
-                            break;
-
-
-                        case error.TIMEOUT:
-
-                            message =
-                                "GPS request timed out.";
-
-                            break;
-
-
-                        default:
-
-                            message =
-                                "Unable to get GPS location.";
-                    }
-
-
-                    reject(
-                        new Error(message)
-                    );
-                },
-
-
-                {
-
-                    enableHighAccuracy:
-                        true,
-
-                    timeout:
-                        15000,
-
-                    maximumAge:
-                        0
-
-                }
-            );
-        }
-    );
-}
-
-
-// =====================================================
-// SEND GPS + FACE EMBEDDING TO BACKEND
-// =====================================================
-
-async function sendGPSToBackend(employeeId) {
-
-    try {
-
-        console.log(
-            "========== ATTENDANCE START =========="
-        );
-
-
-        // =================================================
-        // 1. EMPLOYEE ID CHECK
-        // =================================================
-
-        if (
-            !employeeId ||
-            employeeId.trim() === ""
-        ) {
-
-            alert(
-                "Employee ID missing hai."
-            );
-
-            return {
-
-                success:
-                    false,
-
-                message:
-                    "Employee ID missing."
-
-            };
-        }
-
-
-        // =================================================
-        // 2. FACE EMBEDDING CHECK
-        // =================================================
-
-        if (
-            !capturedFaceEmbedding ||
-            capturedFaceEmbedding.length !== 128
-        ) {
-
-            alert(
-                "Pehle camera se face capture karo.\n\n" +
-                "Valid face embedding required hai."
-            );
-
-            return {
-
-                success:
-                    false,
-
-                message:
-                    "Face embedding missing."
-
-            };
-        }
-
-
-        // =================================================
-        // 3. GET REAL GPS
-        // =================================================
-
-        statusText.textContent =
-            "Getting your location...";
-
-
-        const gps =
-            await getRealGPS();
-
-
-        console.log(
-            "GPS received successfully."
-        );
-
-
-        // =================================================
-        // 4. PREPARE REQUEST
-        // =================================================
-
-        statusText.textContent =
-            "Checking face and location...";
-
-
-        const requestData = {
-
-            employeeId:
-                employeeId,
-
-            latitude:
-                gps.latitude,
-
-            longitude:
-                gps.longitude,
-
-            accuracy:
-                gps.accuracy,
-
-            faceEmbedding:
-                capturedFaceEmbedding
-
-        };
-
-
-        console.log(
-            "Attendance request prepared."
-        );
-
-
-        console.log(
-            "Employee ID:",
-            employeeId
-        );
-
-
-        console.log(
-            "GPS:",
-            gps
-        );
-
-
-        console.log(
-            "Face embedding length:",
-            capturedFaceEmbedding.length
-        );
-
-
-        // =================================================
-        // 5. SEND TO APPS SCRIPT
-        // =================================================
-
-        const response =
-            await fetch(
-
-                ATTENDANCE_API_URL,
-
-                {
-
-                    method:
-                        "POST",
-
-                    headers: {
-
-                        "Content-Type":
-                            "text/plain;charset=utf-8"
-
-                    },
-
-                    body:
-                        JSON.stringify(
-                            requestData
-                        )
-
-                }
-            );
-
-
-        // =================================================
-        // 6. CHECK HTTP RESPONSE
-        // =================================================
-
-        if (!response.ok) {
-
-            throw new Error(
-                "Backend HTTP error: " +
-                response.status
-            );
-        }
-
-
-        // =================================================
-        // 7. READ BACKEND RESPONSE
-        // =================================================
-
-        const result =
-            await response.json();
-
-
-        console.log(
-            "Backend Response:",
-            result
-        );
-
-
-        // =================================================
-        // 8. ATTENDANCE SUCCESS
-        // =================================================
-
-        if (result.success) {
-
-            statusText.textContent =
-                "Attendance marked successfully";
-
-
-            alert(
-
-                "ATTENDANCE MARKED SUCCESSFULLY\n\n" +
-
-                "Employee: " +
-                (
-                    result.employeeName ||
-                    employeeId
-                ) +
-
-                "\nLocation: " +
-                (
-                    result.locationName ||
-                    "Verified"
-                ) +
-
-                "\nDistance: " +
-                (
-                    result.distance ??
-                    "N/A"
-                ) +
-                " meters" +
-
-                "\nFace Match: " +
-                (
-                    result.faceMatch ??
-                    "Verified"
-                ) +
-
-                "\nStatus: " +
-                (
-                    result.status ||
-                    "Present"
-                )
-
-            );
-
-        }
-
-
-        // =================================================
-        // 9. ATTENDANCE REJECTED
-        // =================================================
-
-        else {
-
-            statusText.textContent =
-                "Attendance rejected";
-
-
-            alert(
-
-                "ATTENDANCE REJECTED\n\n" +
-
-                (
-                    result.message ||
-                    "Attendance could not be marked."
-                )
-
-            );
-        }
-
-
-        return result;
-
-
-    } catch (error) {
-
-        console.error(
-            "Attendance Error:",
-            error
-        );
-
-
-        statusText.textContent =
-            "Attendance failed";
-
-
-        alert(
-
-            "ATTENDANCE ERROR\n\n" +
-
-            error.message
-
-        );
-
-
-        return {
-
-            success:
-                false,
-
-            message:
-                error.message
-
-        };
-    }
-}
-
-
-// =====================================================
-// TEST GPS + FACE ATTENDANCE
-// =====================================================
-
-async function testGPSAttendance() {
-
-    // ---------------------------------------------
-    // Temporary testing only.
-    //
-    // Later:
-    // Employee ID login/email se automatically
-    // backend se identify hoga.
-    // ---------------------------------------------
-
-    const employeeId =
-        "EMP001";
-
-
-    await sendGPSToBackend(
-        employeeId
-    );
-}
-
-
-// =====================================================
-// OPTIONAL: GET CAPTURED EMBEDDING
-// =====================================================
-//
-// Debug ke liye.
-// Production mein console mein embedding
-// show karna avoid karna.
+// OPTIONAL DEBUG FUNCTION
 // =====================================================
 
 function getCapturedFaceEmbedding() {
 
-    return capturedFaceEmbedding;
+    return currentEmbedding;
+
 }
 
 
 // =====================================================
-// OPTIONAL: CHECK FACE STATUS
+// OPTIONAL FACE STATUS
 // =====================================================
 
 function isFaceCaptured() {
 
     return (
-        capturedFaceEmbedding !== null &&
-        capturedFaceEmbedding.length === 128
+        currentEmbedding !== null &&
+        currentEmbedding.length === 128
     );
+
 }
