@@ -3,45 +3,58 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Face Attendance System</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 
   <style>
     /* =========================================================
-       MODERN UI ONLY
-       No JavaScript / functionality changed
+       FACE ATTENDANCE SYSTEM
+       UI ONLY
+       Existing JavaScript conditions remain unchanged
        ========================================================= */
 
     :root {
       --primary: #2563eb;
       --primary-dark: #1d4ed8;
-      --primary-light: #eff6ff;
+      --primary-soft: #eff6ff;
 
       --success: #16a34a;
-      --success-light: #f0fdf4;
+      --success-soft: #f0fdf4;
 
       --danger: #dc2626;
-      --danger-light: #fef2f2;
+      --danger-soft: #fef2f2;
 
-      --warning: #d97706;
-      --warning-light: #fffbeb;
+      --warning: #f59e0b;
+      --warning-soft: #fffbeb;
 
       --dark: #0f172a;
       --dark-2: #1e293b;
 
       --text: #172033;
       --muted: #64748b;
+
       --border: #e2e8f0;
-      --bg: #f5f7fb;
+      --bg: #f4f7fb;
       --white: #ffffff;
 
-      --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
-      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-      --shadow-lg: 0 18px 45px rgba(15, 23, 42, 0.12);
+      --shadow-sm:
+        0 3px 10px rgba(15, 23, 42, 0.06);
 
-      --radius: 18px;
+      --shadow:
+        0 12px 35px rgba(15, 23, 42, 0.09);
+
+      --shadow-lg:
+        0 20px 55px rgba(15, 23, 42, 0.15);
+
+      --radius: 20px;
     }
+
+
+    /* =========================================================
+       RESET
+       ========================================================= */
 
     * {
       box-sizing: border-box;
@@ -54,6 +67,8 @@
     }
 
     body {
+      min-height: 100vh;
+
       font-family:
         Inter,
         -apple-system,
@@ -63,31 +78,31 @@
         Arial,
         sans-serif;
 
+      color: var(--text);
+
       background:
         radial-gradient(
-          circle at 10% 0%,
+          circle at 0% 0%,
           rgba(37, 99, 235, 0.10),
           transparent 30%
         ),
         radial-gradient(
-          circle at 90% 10%,
-          rgba(14, 165, 233, 0.08),
+          circle at 100% 0%,
+          rgba(59, 130, 246, 0.08),
           transparent 28%
         ),
         var(--bg);
-
-      color: var(--text);
-      min-height: 100vh;
     }
 
     button,
     input {
-      font: inherit;
+      font-family: inherit;
     }
 
     button {
       cursor: pointer;
     }
+
 
     /* =========================================================
        HEADER
@@ -95,25 +110,30 @@
 
     .header {
       position: relative;
+
       overflow: hidden;
+
+      padding: 34px 20px 38px;
+
+      text-align: center;
+
+      color: #ffffff;
 
       background:
         linear-gradient(
           135deg,
-          #0f172a 0%,
-          #1e3a8a 48%,
+          #020617 0%,
+          #172554 45%,
           #2563eb 100%
         );
 
-      color: white;
-      padding: 42px 20px 46px;
-      text-align: center;
-
-      box-shadow: 0 8px 30px rgba(15, 23, 42, 0.18);
+      box-shadow:
+        0 10px 35px rgba(15, 23, 42, 0.20);
     }
 
     .header::before {
       content: "";
+
       position: absolute;
 
       width: 280px;
@@ -121,73 +141,85 @@
 
       border-radius: 50%;
 
-      background: rgba(255, 255, 255, 0.08);
+      background:
+        rgba(255, 255, 255, 0.06);
 
-      top: -150px;
-      left: -70px;
+      top: -180px;
+      left: -80px;
     }
 
     .header::after {
       content: "";
+
       position: absolute;
 
-      width: 350px;
-      height: 350px;
+      width: 300px;
+      height: 300px;
 
       border-radius: 50%;
 
-      background: rgba(255, 255, 255, 0.06);
+      background:
+        rgba(255, 255, 255, 0.05);
 
       right: -100px;
-      bottom: -220px;
+      bottom: -200px;
     }
 
     .header h1 {
       position: relative;
       z-index: 2;
 
-      font-size: clamp(27px, 5vw, 40px);
+      font-size: clamp(26px, 5vw, 38px);
+
       font-weight: 800;
 
       letter-spacing: -0.8px;
 
-      margin-bottom: 8px;
+      margin-bottom: 7px;
     }
 
     .header p {
       position: relative;
       z-index: 2;
 
-      color: rgba(255, 255, 255, 0.82);
+      font-size: 14px;
 
-      font-size: 15px;
+      color:
+        rgba(255, 255, 255, 0.78);
+
       letter-spacing: 0.3px;
     }
 
+
     /* =========================================================
-       MAIN CONTAINER
+       MAIN
        ========================================================= */
 
     .container {
-      width: min(1000px, calc(100% - 30px));
+      width: min(850px, calc(100% - 24px));
 
-      margin: 28px auto 50px;
+      margin:
+        22px auto 45px;
     }
 
+
     /* =========================================================
-       CARD
+       CARDS
        ========================================================= */
 
     .card {
+      position: relative;
+
       background: var(--white);
 
-      border: 1px solid rgba(226, 232, 240, 0.85);
+      border:
+        1px solid rgba(226, 232, 240, 0.9);
 
       border-radius: var(--radius);
 
-      padding: 24px;
+      padding: 22px;
 
-      margin-bottom: 20px;
+      margin-bottom: 18px;
 
       box-shadow: var(--shadow);
 
@@ -197,107 +229,88 @@
     }
 
     .card:hover {
-      transform: translateY(-2px);
+      transform: translateY(-1px);
+
       box-shadow: var(--shadow-lg);
     }
 
     .card h2 {
+      font-size: 19px;
+
+      font-weight: 800;
+
       color: var(--dark);
 
-      font-size: 20px;
-      font-weight: 750;
-
-      margin-bottom: 18px;
+      margin-bottom: 16px;
     }
 
+
     /* =========================================================
-       LOGIN SECTION
+       LOGIN CARD
        ========================================================= */
 
     #employeeEmail {
       width: 100%;
 
-      border: 2px solid var(--border);
+      height: 52px;
+
+      padding:
+        0 16px;
+
+      border:
+        2px solid var(--border);
 
       border-radius: 13px;
 
-      padding: 14px 16px;
+      outline: none;
 
       background: #fbfdff;
 
-      color: var(--text);
-
-      outline: none;
+      color: var(--dark);
 
       font-size: 15px;
 
       transition:
         border-color 0.2s ease,
-        box-shadow 0.2s ease,
-        background 0.2s ease;
+        box-shadow 0.2s ease;
+    }
+
+    #employeeEmail:focus {
+      border-color:
+        var(--primary);
+
+      box-shadow:
+        0 0 0 4px
+        rgba(37, 99, 235, 0.10);
+
+      background: #ffffff;
     }
 
     #employeeEmail::placeholder {
       color: #94a3b8;
     }
 
-    #employeeEmail:focus {
-      background: white;
-
-      border-color: var(--primary);
-
-      box-shadow:
-        0 0 0 4px rgba(37, 99, 235, 0.10);
-    }
 
     /* =========================================================
-       BUTTONS
+       LOGIN BUTTON
        ========================================================= */
 
-    #loginBtn,
-    #startCameraBtn,
-    #scanFaceBtn,
-    #stopCameraBtn,
-    #markAttendanceBtn {
-      border: none;
-
-      border-radius: 12px;
-
-      padding: 13px 20px;
-
-      font-size: 14px;
-      font-weight: 700;
-
-      transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease,
-        opacity 0.2s ease;
-
-      position: relative;
-      overflow: hidden;
-    }
-
     #loginBtn {
-      margin-top: 14px;
-
       width: 100%;
 
-      color: white;
+      height: 50px;
 
-      background:
-        linear-gradient(
-          135deg,
-          var(--primary),
-          #3b82f6
-        );
+      margin-top: 13px;
 
-      box-shadow:
-        0 8px 20px rgba(37, 99, 235, 0.25);
-    }
+      border: none;
 
-    #startCameraBtn,
-    #scanFaceBtn {
-      color: white;
+      border-radius: 13px;
+
+      color: #ffffff;
+
+      font-size: 14px;
+
+      font-weight: 750;
 
       background:
         linear-gradient(
@@ -307,70 +320,32 @@
         );
 
       box-shadow:
-        0 7px 18px rgba(37, 99, 235, 0.22);
+        0 8px 22px
+        rgba(37, 99, 235, 0.25);
+
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        opacity 0.2s ease;
     }
 
-    #stopCameraBtn {
-      color: white;
-
-      background:
-        linear-gradient(
-          135deg,
-          #475569,
-          #64748b
-        );
-    }
-
-    #markAttendanceBtn {
-      width: 100%;
-
-      color: white;
-
-      background:
-        linear-gradient(
-          135deg,
-          #16a34a,
-          #22c55e
-        );
+    #loginBtn:hover {
+      transform: translateY(-2px);
 
       box-shadow:
-        0 8px 20px rgba(22, 163, 74, 0.23);
+        0 12px 28px
+        rgba(37, 99, 235, 0.30);
     }
 
-    #loginBtn:hover,
-    #startCameraBtn:hover,
-    #scanFaceBtn:hover,
-    #stopCameraBtn:hover,
-    #markAttendanceBtn:hover {
-      transform: translateY(-2px);
-    }
-
-    #loginBtn:active,
-    #startCameraBtn:active,
-    #scanFaceBtn:active,
-    #stopCameraBtn:active,
-    #markAttendanceBtn:active {
-      transform: translateY(0);
-    }
-
-    button:disabled {
-      opacity: 0.48;
-
-      cursor: not-allowed;
-
-      transform: none !important;
-
-      box-shadow: none !important;
-    }
 
     /* =========================================================
        EMPLOYEE INFO
        ========================================================= */
 
     #employeeInfo {
-      margin-top: 18px;
+      margin-top: 17px;
 
-      padding: 18px;
+      padding: 16px;
 
       border-radius: 15px;
 
@@ -381,13 +356,25 @@
           #f8fbff
         );
 
-      border: 1px solid #dbeafe;
+      border:
+        1px solid #dbeafe;
     }
 
     #employeeInfo > div {
-      padding: 8px 0;
+      display: flex;
 
-      border-bottom: 1px solid rgba(147, 197, 253, 0.28);
+      align-items: center;
+
+      justify-content: space-between;
+
+      gap: 15px;
+
+      padding: 9px 0;
+
+      border-bottom:
+        1px solid rgba(147, 197, 253, 0.28);
+
+      font-size: 14px;
     }
 
     #employeeInfo > div:last-child {
@@ -395,11 +382,9 @@
     }
 
     #employeeInfo strong {
-      display: inline-block;
+      color: #64748b;
 
-      min-width: 150px;
-
-      color: #475569;
+      font-weight: 650;
     }
 
     #employeeName,
@@ -408,48 +393,87 @@
     #loggedEmail {
       color: var(--dark);
 
-      font-weight: 700;
+      font-weight: 750;
+
+      text-align: right;
     }
 
+
     /* =========================================================
-       CAMERA SECTION
+       CAMERA CARD
        ========================================================= */
 
     #cameraCard {
       overflow: hidden;
+
+      padding: 18px;
     }
 
+    #cameraCard h2 {
+      display: flex;
+
+      align-items: center;
+
+      gap: 9px;
+
+      margin-bottom: 15px;
+    }
+
+    #cameraCard h2::before {
+      content: "";
+
+      width: 10px;
+      height: 10px;
+
+      border-radius: 50%;
+
+      background: var(--primary);
+
+      box-shadow:
+        0 0 0 5px
+        rgba(37, 99, 235, 0.10);
+    }
+
+
+    /* =========================================================
+       CAMERA VIEW
+       ========================================================= */
+
     #cameraMessage {
-      min-height: 360px;
+      position: relative;
+
+      width: 100%;
+
+      min-height: 430px;
 
       display: flex;
 
+      align-items: center;
+
+      justify-content: center;
+
       flex-direction: column;
 
-      align-items: center;
-      justify-content: center;
+      overflow: hidden;
+
+      border-radius: 18px;
+
+      color: #cbd5e1;
 
       text-align: center;
 
-      border-radius: 17px;
-
-      color: #cbd5e1;
+      font-size: 14px;
 
       background:
         radial-gradient(
           circle at center,
           #263449 0%,
-          #111827 55%,
+          #111827 52%,
           #020617 100%
         );
 
-      border: 1px solid #334155;
-
-      font-size: 15px;
-
-      position: relative;
-
-      overflow: hidden;
+      border:
+        1px solid #334155;
     }
 
     #cameraMessage::before {
@@ -457,29 +481,34 @@
 
       position: absolute;
 
-      width: 210px;
-      height: 210px;
+      width: 190px;
+      height: 190px;
 
       border-radius: 50%;
 
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      border:
+        1px solid
+        rgba(255, 255, 255, 0.08);
 
-      animation: cameraPulse 2.5s infinite;
+      animation:
+        cameraPulse 2.4s infinite;
     }
 
     #cameraMessage::after {
       content: "📷";
 
-      font-size: 50px;
+      position: relative;
 
-      margin-bottom: 15px;
+      z-index: 2;
 
-      z-index: 1;
+      font-size: 48px;
+
+      margin-bottom: 12px;
     }
 
     @keyframes cameraPulse {
       0% {
-        transform: scale(0.85);
+        transform: scale(0.82);
         opacity: 0.25;
       }
 
@@ -489,96 +518,191 @@
       }
 
       100% {
-        transform: scale(0.85);
+        transform: scale(0.82);
         opacity: 0.25;
       }
     }
 
-    #camera {
-      width: 100%;
 
+    /* =========================================================
+       LIVE CAMERA
+       ========================================================= */
+
+    #camera {
       display: block;
 
-      aspect-ratio: 16 / 9;
+      width: 100%;
+
+      /*
+        Large camera viewport.
+        Face gets maximum visible area.
+      */
+
+      height: min(72vh, 620px);
+
+      min-height: 430px;
 
       object-fit: cover;
 
+      object-position: center;
+
       background: #020617;
 
-      border-radius: 17px;
+      border:
+        3px solid #0f172a;
 
-      border: 3px solid #0f172a;
+      border-radius: 18px;
 
       box-shadow:
-        inset 0 0 0 1px rgba(255, 255, 255, 0.05),
-        0 15px 35px rgba(15, 23, 42, 0.20);
+        inset 0 0 0 1px
+        rgba(255, 255, 255, 0.05),
+
+        0 15px 35px
+        rgba(15, 23, 42, 0.25);
     }
+
+
+    /* =========================================================
+       FACE SCAN FRAME
+       ========================================================= */
+
+    #camera {
+      position: relative;
+    }
+
+
+    /* =========================================================
+       CANVAS
+       ========================================================= */
 
     #canvas {
       display: none;
     }
 
+
     /* =========================================================
-       CAMERA BUTTON AREA
+       CAMERA BUTTONS
        ========================================================= */
 
     .camera-buttons {
-      display: flex;
+      display: grid;
 
-      gap: 12px;
+      grid-template-columns:
+        repeat(3, 1fr);
 
-      flex-wrap: wrap;
+      gap: 10px;
 
-      margin-top: 15px;
+      margin-top: 13px;
     }
 
     .camera-buttons button {
-      flex: 1;
-      min-width: 160px;
-    }
+      min-height: 47px;
 
-    /* =========================================================
-       STATUS BOXES
-       ========================================================= */
-
-    #modelStatus,
-    #faceStatus,
-    #statusText {
-      margin-top: 13px;
-
-      padding: 12px 15px;
+      border: none;
 
       border-radius: 12px;
 
-      background: #f8fafc;
+      color: #ffffff;
 
-      border: 1px solid var(--border);
+      font-size: 13px;
+
+      font-weight: 750;
+
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        opacity 0.2s ease;
+    }
+
+    #startCameraBtn {
+      background:
+        linear-gradient(
+          135deg,
+          #2563eb,
+          #3b82f6
+        );
+
+      box-shadow:
+        0 7px 18px
+        rgba(37, 99, 235, 0.20);
+    }
+
+    #scanFaceBtn {
+      background:
+        linear-gradient(
+          135deg,
+          #0f766e,
+          #14b8a6
+        );
+
+      box-shadow:
+        0 7px 18px
+        rgba(20, 184, 166, 0.20);
+    }
+
+    #stopCameraBtn {
+      background:
+        linear-gradient(
+          135deg,
+          #475569,
+          #64748b
+        );
+    }
+
+    .camera-buttons button:hover {
+      transform: translateY(-2px);
+    }
+
+
+    /* =========================================================
+       MODEL / FACE STATUS
+       ========================================================= */
+
+    #modelStatus,
+    #faceStatus {
+      position: relative;
+
+      margin-top: 10px;
+
+      padding:
+        12px 14px;
+
+      border-radius: 11px;
+
+      border:
+        1px solid var(--border);
+
+      background: #f8fafc;
 
       color: var(--muted);
 
-      font-size: 14px;
+      font-size: 13px;
 
       line-height: 1.5;
     }
 
-    #modelStatus {
-      background: #f8fafc;
+    #faceStatus {
+      color: #334155;
+
+      background:
+        linear-gradient(
+          135deg,
+          #f8fafc,
+          #ffffff
+        );
     }
 
-    #faceStatus {
-      background: #f8fafc;
-    }
 
     /* =========================================================
-       PHOTO SECTION
+       CAPTURED IMAGE
        ========================================================= */
 
     #photoSection {
-      margin-top: 20px;
+      margin-top: 15px;
+
+      padding: 17px;
 
       text-align: center;
-
-      padding: 20px;
 
       border-radius: 16px;
 
@@ -589,65 +713,68 @@
           #ffffff
         );
 
-      border: 1px solid var(--border);
+      border:
+        1px solid var(--border);
     }
 
     #photoSection p {
       color: var(--muted);
 
-      font-size: 13px;
+      font-size: 12px;
 
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
     #capturedImage {
       width: 125px;
+
       height: 125px;
 
       object-fit: cover;
 
       border-radius: 50%;
 
-      border: 5px solid white;
+      border:
+        5px solid #ffffff;
 
       box-shadow:
-        0 8px 25px rgba(15, 23, 42, 0.18);
-
-      background: #e2e8f0;
+        0 10px 25px
+        rgba(15, 23, 42, 0.18);
     }
+
 
     /* =========================================================
        ATTENDANCE TYPE
        ========================================================= */
 
     #attendanceTypeCard {
-      border-top: 4px solid var(--primary);
+      border-top:
+        4px solid var(--primary);
     }
 
     .attendance-options {
       display: grid;
 
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns:
+        repeat(2, 1fr);
 
-      gap: 15px;
+      gap: 14px;
     }
 
     .attendance-option {
       position: relative;
 
-      border: 2px solid var(--border);
+      padding: 23px 18px;
 
-      border-radius: 16px;
+      border:
+        2px solid var(--border);
 
-      padding: 20px;
+      border-radius: 17px;
 
-      background: white;
+      background: #ffffff;
 
       transition:
-        border-color 0.2s ease,
-        background 0.2s ease,
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
+        all 0.2s ease;
     }
 
     .attendance-option:hover {
@@ -667,13 +794,23 @@
     .attendance-option label {
       display: block;
 
-      cursor: pointer;
-
       text-align: center;
 
       font-size: 18px;
 
       font-weight: 800;
+
+      cursor: pointer;
+    }
+
+    .in-option {
+      border-color:
+        #bbf7d0;
+    }
+
+    .out-option {
+      border-color:
+        #fecaca;
     }
 
     #inOption:checked + label {
@@ -684,52 +821,65 @@
       color: var(--danger);
     }
 
-    .attendance-option.in-option:has(#inOption:checked) {
+    .attendance-option.in-option:has(
+      #inOption:checked
+    ) {
       border-color: var(--success);
 
-      background: var(--success-light);
+      background:
+        var(--success-soft);
 
       box-shadow:
-        0 8px 25px rgba(22, 163, 74, 0.10);
+        0 10px 25px
+        rgba(22, 163, 74, 0.10);
     }
 
-    .attendance-option.out-option:has(#outOption:checked) {
+    .attendance-option.out-option:has(
+      #outOption:checked
+    ) {
       border-color: var(--danger);
 
-      background: var(--danger-light);
+      background:
+        var(--danger-soft);
 
       box-shadow:
-        0 8px 25px rgba(220, 38, 38, 0.10);
+        0 10px 25px
+        rgba(220, 38, 38, 0.10);
     }
+
 
     /* =========================================================
        CURRENT STATUS
        ========================================================= */
 
     #currentStatus {
-      margin-top: 18px;
+      margin-top: 15px;
 
-      padding: 18px;
+      padding: 16px;
 
       border-radius: 15px;
 
       background: #f8fafc;
 
-      border: 1px solid var(--border);
+      border:
+        1px solid var(--border);
     }
 
     #currentStatus > div {
       display: flex;
 
+      align-items: center;
+
       justify-content: space-between;
 
       gap: 20px;
 
-      padding: 10px 0;
+      padding: 9px 0;
 
-      border-bottom: 1px solid var(--border);
+      border-bottom:
+        1px solid var(--border);
 
-      font-size: 14px;
+      font-size: 13px;
     }
 
     #currentStatus > div:last-child {
@@ -750,28 +900,83 @@
       text-align: right;
     }
 
+
     /* =========================================================
-       MARK ATTENDANCE CARD
+       MARK ATTENDANCE
        ========================================================= */
 
     #markCard {
-      border-top: 4px solid var(--success);
+      border-top:
+        4px solid var(--success);
     }
 
     #statusText {
+      padding: 12px 14px;
+
+      margin-bottom: 13px;
+
+      border-radius: 11px;
+
+      background: #f8fafc;
+
+      border:
+        1px solid var(--border);
+
+      color: var(--muted);
+
       text-align: center;
 
-      margin-bottom: 15px;
+      font-size: 13px;
     }
 
+    #markAttendanceBtn {
+      width: 100%;
+
+      min-height: 52px;
+
+      border: none;
+
+      border-radius: 13px;
+
+      color: #ffffff;
+
+      font-size: 15px;
+
+      font-weight: 800;
+
+      background:
+        linear-gradient(
+          135deg,
+          #16a34a,
+          #22c55e
+        );
+
+      box-shadow:
+        0 9px 23px
+        rgba(22, 163, 74, 0.22);
+
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+    }
+
+    #markAttendanceBtn:hover {
+      transform: translateY(-2px);
+
+      box-shadow:
+        0 13px 28px
+        rgba(22, 163, 74, 0.28);
+    }
+
+
     /* =========================================================
-       SUCCESS RESULT
+       RESULT
        ========================================================= */
 
     #attendanceResult {
-      margin-top: 20px;
+      margin-top: 17px;
 
-      padding: 22px;
+      padding: 20px;
 
       border-radius: 17px;
 
@@ -782,45 +987,56 @@
           #ffffff
         );
 
-      border: 1px solid #bbf7d0;
+      border:
+        1px solid #bbf7d0;
 
-      animation: resultAppear 0.45s ease;
+      animation:
+        resultAppear 0.4s ease;
     }
 
     @keyframes resultAppear {
       from {
         opacity: 0;
-        transform: translateY(12px) scale(0.98);
+
+        transform:
+          translateY(10px)
+          scale(0.98);
       }
 
       to {
         opacity: 1;
-        transform: translateY(0) scale(1);
+
+        transform:
+          translateY(0)
+          scale(1);
       }
     }
 
     #attendanceResult h3 {
       color: var(--success);
 
-      font-size: 21px;
-
-      margin-bottom: 16px;
+      font-size: 20px;
 
       text-align: center;
+
+      margin-bottom: 14px;
     }
 
     #attendanceResult > div {
       display: flex;
 
+      align-items: center;
+
       justify-content: space-between;
 
       gap: 20px;
 
-      padding: 10px 0;
+      padding: 9px 0;
 
-      border-bottom: 1px solid #dcfce7;
+      border-bottom:
+        1px solid #dcfce7;
 
-      font-size: 14px;
+      font-size: 13px;
     }
 
     #attendanceResult > div:last-child {
@@ -828,7 +1044,7 @@
     }
 
     #attendanceResult strong {
-      color: #64748b;
+      color: var(--muted);
     }
 
     #resultEmployee,
@@ -839,53 +1055,26 @@
     #resultDistance {
       color: var(--dark);
 
-      font-weight: 700;
+      font-weight: 750;
 
       text-align: right;
     }
 
-    /* =========================================================
-       HIDDEN STATE
-       ========================================================= */
-
-    [style*="display:none"] {
-      /* Keep JS-controlled inline display behavior intact */
-    }
 
     /* =========================================================
-       LOADING / LOOKING EFFECT
+       DISABLED
        ========================================================= */
 
-    .loading {
-      position: relative;
+    button:disabled {
+      opacity: 0.48;
+
+      cursor: not-allowed;
+
+      transform: none !important;
+
+      box-shadow: none !important;
     }
 
-    .loading::after {
-      content: "";
-
-      display: inline-block;
-
-      width: 8px;
-      height: 8px;
-
-      margin-left: 8px;
-
-      border-radius: 50%;
-
-      border: 2px solid currentColor;
-
-      border-right-color: transparent;
-
-      animation: spin 0.7s linear infinite;
-
-      vertical-align: middle;
-    }
-
-    @keyframes spin {
-      to {
-        transform: rotate(360deg);
-      }
-    }
 
     /* =========================================================
        MOBILE
@@ -894,52 +1083,94 @@
     @media (max-width: 700px) {
 
       .header {
-        padding: 32px 15px 36px;
+        padding:
+          28px 15px 31px;
       }
 
       .header h1 {
-        font-size: 27px;
+        font-size: 26px;
+      }
+
+      .header p {
+        font-size: 13px;
       }
 
       .container {
-        width: min(100% - 20px, 1000px);
+        width:
+          calc(100% - 16px);
 
-        margin-top: 18px;
+        margin-top: 14px;
       }
 
       .card {
-        padding: 17px;
+        padding: 16px;
 
-        border-radius: 15px;
+        border-radius: 16px;
       }
 
       .card h2 {
         font-size: 18px;
       }
 
-      #cameraMessage {
-        min-height: 240px;
+
+      /* Larger mobile camera */
+
+      #camera {
+        height: 72vh;
+
+        min-height: 430px;
+
+        max-height: 680px;
+
+        object-fit: cover;
       }
 
+      #cameraMessage {
+        min-height: 430px;
+      }
+
+
       .camera-buttons {
-        flex-direction: column;
+        grid-template-columns: 1fr;
+
+        gap: 9px;
       }
 
       .camera-buttons button {
         width: 100%;
 
-        min-width: 0;
+        min-height: 46px;
       }
+
 
       .attendance-options {
         grid-template-columns: 1fr;
       }
 
-      #currentStatus > div,
-      #attendanceResult > div {
+
+      #employeeInfo > div {
+        align-items: flex-start;
+
         flex-direction: column;
 
-        gap: 4px;
+        gap: 3px;
+      }
+
+      #employeeName,
+      #employeeId,
+      #employeeDepartment,
+      #loggedEmail {
+        text-align: left;
+      }
+
+
+      #currentStatus > div,
+      #attendanceResult > div {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 3px;
       }
 
       #currentAttendanceStatus,
@@ -953,41 +1184,48 @@
       #resultDistance {
         text-align: left;
       }
-
-      #employeeInfo > div {
-        display: flex;
-
-        flex-direction: column;
-
-        gap: 3px;
-      }
-
-      #employeeInfo strong {
-        min-width: 0;
-      }
     }
+
+
+    /* =========================================================
+       SMALL MOBILE
+       ========================================================= */
 
     @media (max-width: 420px) {
 
       .header h1 {
-        font-size: 24px;
+        font-size: 23px;
       }
 
-      .header p {
-        font-size: 13px;
+      .container {
+        width:
+          calc(100% - 12px);
+      }
+
+      .card {
+        padding: 13px;
+      }
+
+      #camera {
+        height: 70vh;
+
+        min-height: 400px;
+      }
+
+      #cameraMessage {
+        min-height: 400px;
       }
 
       #capturedImage {
         width: 105px;
+
         height: 105px;
       }
-
-      #cameraMessage {
-        min-height: 210px;
-      }
     }
+
   </style>
 </head>
+
 
 <body>
 
@@ -996,8 +1234,15 @@
        ========================================================= -->
 
   <div class="header">
-    <h1>Face Attendance System</h1>
-    <p>Secure Employee Attendance</p>
+
+    <h1>
+      Face Attendance System
+    </h1>
+
+    <p>
+      Secure Employee Attendance
+    </p>
+
   </div>
 
 
@@ -1014,7 +1259,9 @@
 
     <div class="card">
 
-      <h2>Employee Login</h2>
+      <h2>
+        Employee Login
+      </h2>
 
       <input
         type="email"
@@ -1039,23 +1286,46 @@
       >
 
         <div>
-          <strong>Employee Name:</strong>
+
+          <strong>
+            Employee Name
+          </strong>
+
           <span id="employeeName"></span>
+
         </div>
 
+
         <div>
-          <strong>Employee ID:</strong>
+
+          <strong>
+            Employee ID
+          </strong>
+
           <span id="employeeId"></span>
+
         </div>
 
+
         <div>
-          <strong>Department:</strong>
+
+          <strong>
+            Department
+          </strong>
+
           <span id="employeeDepartment"></span>
+
         </div>
 
+
         <div>
-          <strong>Logged Email:</strong>
+
+          <strong>
+            Logged Email
+          </strong>
+
           <span id="loggedEmail"></span>
+
         </div>
 
       </div>
@@ -1064,7 +1334,7 @@
 
 
     <!-- =======================================================
-         CAMERA CARD
+         FACE VERIFICATION / CAMERA
          ======================================================= -->
 
     <div
@@ -1073,17 +1343,19 @@
       style="display:none;"
     >
 
-      <h2>Face Verification</h2>
+      <h2>
+        Face Verification
+      </h2>
 
 
-      <!-- Camera Message -->
+      <!-- Camera not started message -->
 
       <div id="cameraMessage">
         Camera is not started
       </div>
 
 
-      <!-- Camera -->
+      <!-- Live Camera -->
 
       <video
         id="camera"
@@ -1093,12 +1365,12 @@
       ></video>
 
 
-      <!-- Canvas -->
+      <!-- Hidden canvas -->
 
       <canvas id="canvas"></canvas>
 
 
-      <!-- Camera Buttons -->
+      <!-- Camera controls -->
 
       <div class="camera-buttons">
 
@@ -1109,6 +1381,7 @@
           Start Camera
         </button>
 
+
         <button
           id="scanFaceBtn"
           onclick="scanFace()"
@@ -1116,6 +1389,7 @@
         >
           Scan Face
         </button>
+
 
         <button
           id="stopCameraBtn"
@@ -1128,28 +1402,30 @@
       </div>
 
 
-      <!-- Model Status -->
+      <!-- Model loading status -->
 
       <div id="modelStatus">
         Loading face recognition models...
       </div>
 
 
-      <!-- Face Status -->
+      <!-- Face scanning status -->
 
       <div id="faceStatus">
         Please start camera
       </div>
 
 
-      <!-- Captured Photo -->
+      <!-- Captured face -->
 
       <div
         id="photoSection"
         style="display:none;"
       >
 
-        <p>Captured Face</p>
+        <p>
+          Captured Face
+        </p>
 
         <img
           id="capturedImage"
@@ -1163,6 +1439,7 @@
 
     <!-- =======================================================
          ATTENDANCE TYPE
+         Existing JS controls visibility
          ======================================================= -->
 
     <div
@@ -1171,10 +1448,13 @@
       style="display:none;"
     >
 
-      <h2>Select Attendance Type</h2>
+      <h2>
+        Select Attendance Type
+      </h2>
 
 
       <div class="attendance-options">
+
 
         <!-- IN -->
 
@@ -1216,23 +1496,46 @@
       </div>
 
 
-      <!-- Current Attendance Status -->
+      <!-- Current attendance -->
 
       <div id="currentStatus">
 
         <div>
-          <strong>Status</strong>
-          <span id="currentAttendanceStatus">-</span>
+
+          <strong>
+            Status
+          </strong>
+
+          <span id="currentAttendanceStatus">
+            -
+          </span>
+
         </div>
 
-        <div>
-          <strong>IN Time</strong>
-          <span id="currentInTime">-</span>
-        </div>
 
         <div>
-          <strong>OUT Time</strong>
-          <span id="currentOutTime">-</span>
+
+          <strong>
+            IN Time
+          </strong>
+
+          <span id="currentInTime">
+            -
+          </span>
+
+        </div>
+
+
+        <div>
+
+          <strong>
+            OUT Time
+          </strong>
+
+          <span id="currentOutTime">
+            -
+          </span>
+
         </div>
 
       </div>
@@ -1250,7 +1553,9 @@
       style="display:none;"
     >
 
-      <h2>Mark Attendance</h2>
+      <h2>
+        Mark Attendance
+      </h2>
 
 
       <div id="statusText">
@@ -1267,7 +1572,7 @@
       </button>
 
 
-      <!-- Attendance Result -->
+      <!-- Attendance result -->
 
       <div
         id="attendanceResult"
@@ -1280,33 +1585,68 @@
 
 
         <div>
-          <strong>Employee</strong>
+
+          <strong>
+            Employee
+          </strong>
+
           <span id="resultEmployee"></span>
+
         </div>
 
+
         <div>
-          <strong>Attendance Type</strong>
+
+          <strong>
+            Attendance Type
+          </strong>
+
           <span id="resultType"></span>
+
         </div>
 
+
         <div>
-          <strong>Date</strong>
+
+          <strong>
+            Date
+          </strong>
+
           <span id="resultDate"></span>
+
         </div>
 
+
         <div>
-          <strong>Time</strong>
+
+          <strong>
+            Time
+          </strong>
+
           <span id="resultTime"></span>
+
         </div>
 
+
         <div>
-          <strong>Location</strong>
+
+          <strong>
+            Location
+          </strong>
+
           <span id="resultLocation"></span>
+
         </div>
 
+
         <div>
-          <strong>Distance</strong>
+
+          <strong>
+            Distance
+          </strong>
+
           <span id="resultDistance"></span>
+
         </div>
 
       </div>
